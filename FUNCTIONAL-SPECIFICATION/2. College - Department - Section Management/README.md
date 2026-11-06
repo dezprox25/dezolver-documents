@@ -2,13 +2,13 @@
 
 **Document ID:** DEZ-ORG-FS-002  
 **Document type:** Functional Specification  
-**Version:** 0.2 — Functional Specification Standard v1.0 compliance pass  
-**Status:** Detailed draft — ready for product review; target behavior not approved  
+**Version:** 0.3 — Source reconciliation and adopted decision baseline  
+**Status:** Detailed draft — ORG-D01–ORG-D42 adopted; schema and cross-module implementation pending  
 **Repository target:** `FUNCTIONAL-SPECIFICATION/2. College - Department - Section Management/README.md`  
 **Review basis:** Functional Specification Standard v1.0; Business Flow (original and v2); Page-to-DB Mapping (original and v2); RBAC; schema  
 **QA companion:** [ORG QA Test Cases](./QA-TEST-CASES.md)
 
-> **Evidence boundary:** This is a source-grounded target functional draft, not proof of legacy implementation. Schema and page mappings confirm represented data/pages, not implemented workflows. Source-confirmed permissions are preserved; inferred Section permissions and lifecycle choices remain TBD. Recommendations are not approved requirements.
+> **Evidence boundary:** This is a source-grounded target functional draft. Schema and page mappings confirm represented data/pages, not implemented workflows. ORG-D01–ORG-D42 were resolved using the recommended baseline authorized by the product owner; the adopted decision record supersedes conflicting TBD wording. Legacy findings are document-reported historical evidence only.
 
 ---
 
@@ -76,6 +76,24 @@ The module does **not** define user credential/invitation behavior, subscription
 - **Derived:** logical safeguard or relationship conclusion based on source facts.
 - **Recommendation:** suggested behavior requiring approval.
 - **TBD / Decision Required:** absent, ambiguous, or conflicting source information.
+
+### 3.4 Legacy-code forensic comparison (historical evidence only)
+
+**Historical sources:** [legacy Module 02 README](../../../functional-spec-from-old%20code/module-02-org/README.md) and [legacy Module 02 specification](../../../functional-spec-from-old%20code/module-02-org/SPECIFICATION.md).
+
+**Evidence qualification:** These files are forensic reports about an older Dezolver v2.0.0 implementation. This review examined the reports as documents; it did not independently re-open or re-test the legacy application source. Findings below are legacy-document-reported, not verified facts about the current target implementation, and are not target requirements.
+
+The legacy reports describe a NestJS tenancy domain, PostgreSQL tenancy schema, React/Vite platform and tenant UI, Prisma multi-schema persistence, Redis tenant-status caching, transactional outbox, BullMQ background jobs and AWS S3 roster uploads. The legacy model used Tenant (including college/direct kinds), unique subdomain and JSON configuration, with Cohort as the academic grouping entity. The reports found no independent Department or Section models/endpoints/views; department/section-like names were represented in Cohort.name. A legacy Invitation entity held tenant, email, role, optional cohort, token, status and expiry/acceptance metadata.
+
+This differs materially from the target schema, which explicitly defines College, Department and Section as separate entities. **Do not replace the target College → Department → Section hierarchy with the historical Tenant → Cohort model.**
+
+The old-code reports describe onboarding with a 14-day trial subscription, tenant listing/detail/configuration, Cohort list/create, invitation issue/list/revoke/accept, CSV roster import and scheduled overdue-subscription suspension plus personal-data anonymization/purge. These are historical behaviors only. Subscription provisioning belongs to Module 3; invitation/credential behavior belongs to Module 1; purge is not carried forward. In particular, the legacy reports identify (1) an invitation acceptance backend/frontend mismatch where the UI expected an access token but the reported backend path did not create a User or issue a token, and (2) a CSV queue payload defect where the producer omitted worker-required s3Key and type fields.
+
+Legacy Tenant states/timers, including pending/trial/active/suspended/expired/cancelled/purged, 14-day trial, 7-day invitation expiry, 03:00 IST suspension job and 04:00 IST purge job, are not adopted. Current College uses EntityStatus. Module 17 owns status transitions; Module 3 owns subscription effects. Legacy role names and Tenant/Cohort/Invitation IDs do not map one-to-one to target roles or entities.
+
+### 3.5 Adopted product decision baseline
+
+The product owner authorized using the recommended answers for the remaining minimal Module 2 decisions on 2026-11-06. ORG-D01–ORG-D42 are therefore adopted as the Module 2 target baseline. The detailed decisions, required schema deltas, RBAC alignment and cross-module contracts are recorded in [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md). That decision record supersedes any conflicting TBD or “recommendation not approved” text in this specification and its QA companion. It does not assert that the required schema, API, UI or dependent-module changes are already implemented.
 
 ## 4. Terminology
 
@@ -858,52 +876,21 @@ Onboarding contains contact details, phone and address. Access roles, data minim
 | ORG-E15 | Onboarding conversion is retried | Idempotency/linking policy TBD; avoid duplicate College creation | TBD |
 | ORG-E16 | External/onboarding contact data is requested by unauthorized role | Deny/minimize response | Derived privacy safeguard |
 
-## 15. Open decisions / decision log
+## 15. Adopted decision baseline and remaining implementation gates
 
-| Decision ID | Question / conflict | Options (if known) | Recommendation (not approved) | Impact | Owner | Status |
-|---|---|---|---|---|---|---|
-| ORG-D01 | Who can submit College onboarding? | SUPER_ADMIN-only; public/external form; both | Clarify intake actor before UI/API | Onboarding access | Product/Security | Open |
-| ORG-D02 | Required onboarding fields and duplicate detection? | Required fields/duplicate match criteria TBD | Define field contract and duplicate policy | Data quality | Product | Open |
-| ORG-D03 | Is onboarding a review/approval workflow? | Direct create; review/approve/reject; request changes | Define status and transitions | College setup | Product | Open |
-| ORG-D04 | What do `reviewedById`/`reviewedAt` mean? | Single review; multiple review events; audit-only | Define use | Review traceability | Product | Open |
-| ORG-D05 | What are `paymentStatus` values and role? | Payment state vs onboarding state | Do not overload it as approval state | Billing/onboarding | Product/Finance | Open |
-| ORG-D06 | Onboarding-to-College link? Schema lacks explicit FK. | Add FK; metadata/link table; another model | Resolve schema before conversion | Duplicate prevention | Product/Architecture | Open |
-| ORG-D07 | Does review approval automatically create College? | Yes; separate action; after subscription | Keep conversion separate until approved | Workflow sequencing | Product | Open |
-| ORG-D08 | College creation required fields/default status? | Fields/defaults TBD | Approve field contract | College create | Product | Open |
-| ORG-D09 | College name/domain uniqueness and domain semantics? | Unique domain; unique name; neither; scoped | Define normalization/uniqueness | Validation | Product/Architecture | Open |
-| ORG-D10 | Initial College seat values? | Module 3 controlled defaults; explicit inputs | Avoid user-editable counters | Seat data | Finance/Product | Open |
-| ORG-D11 | Direct College creation vs onboarding-only? | Both; onboarding-only; direct admin only | Confirm supported entry path | Creation flow | Product | Open |
-| ORG-D12 | HOD College View permission/page? RBAC matrix says View; Page mapping lists HOD Department Management. | Full College view; limited context; no admin page | Clarify actual view scope | RBAC/UI | Product/Security | Open |
-| ORG-D13 | Finance Team College/Department/Section fields? | College-only; department detail; section detail | Least-privilege scope pending review | Data exposure | Product/Security | Open |
-| ORG-D14 | Which College fields are editable after creation? | Name/domain/status; restricted fields | Explicit field allowlist | College edit | Product | Open |
-| ORG-D15 | College domain semantics and validation? | Website domain; email domain; other | Define purpose/format | College identification | Product | Open |
-| ORG-D16 | Meaning and transitions of College EntityStatus values? | ACTIVE/SUSPENDED/DEACTIVATED/ARCHIVED transition matrix | Define in Module 17 | Lifecycle | Product/Security | Open |
-| ORG-D17 | Does College status affect User login/session? | Immediate deny; grace; no automatic effect | Coordinate Module 1 | Access | Product/Security | Open |
-| ORG-D18 | Does College status couple to Subscription status? | Independent; one derives from another | Define precedence in Module 3 | Billing/access | Product/Finance | Open |
-| ORG-D19 | Department required fields and code/name uniqueness? | Unique within College; global; none | Define constraint | Department validation | Product | Open |
-| ORG-D20 | HOD's Department update field allowlist? | Name/code; academic metadata; seats; HOD assignment | Limit HOD to approved fields | HOD permission | Product/Security | Open |
-| ORG-D21 | Department view list/detail fields and filters? | Fields/search/filter/pagination TBD | Use mapped page as context only | UI | Product/Design | Open |
-| ORG-D22 | Can Department change College parent? | No; controlled migration; admin move | Block normal parent edit | Tenant integrity | Product/Architecture | Open |
-| ORG-D23 | Department delete semantics and dependent-record policy? | Restrict; soft delete; archive; cascade | Avoid cascade unless explicitly approved | Data loss | Product/Architecture | Open |
-| ORG-D24 | Who can create/update/delete Section? | SUPER_ADMIN; HOD; both; read-only HOD | RBAC has no explicit Section row; confirm | Section CRUD | Product/Security | Open |
-| ORG-D25 | Section required fields and name/code uniqueness? | Unique per Department; other | Define | Section validation | Product | Open |
-| ORG-D26 | Finance/Manager Section visibility? | No admin access; contextual limited display | Least-privilege context | Data scope | Product/Security | Open |
-| ORG-D27 | Can Section change Department parent? | No; controlled migration; admin move | Block normal parent edit | Hierarchy integrity | Product/Architecture | Open |
-| ORG-D28 | Section delete semantics and dependent-record handling? | Restrict; archive; soft delete; cascade | No implicit cascade | Data loss | Product/Architecture | Open |
-| ORG-D29 | Who may assign/change Department HOD? | SUPER_ADMIN; HOD; delegated role | SUPER_ADMIN likely based on CRUD, confirm | Assignment | Product | Open |
-| ORG-D30 | HOD cardinality? | One HOD per Department; HOD multiple Departments; multiple HODs | Schema currently shows one `hodId` | Role model | Product | Open |
-| ORG-D31 | HOD eligibility and removal behavior? | Role+same College/Department; other | Validate role/scope | Security | Product/Security | Open |
-| ORG-D32 | Can user be assigned multiple Departments/Sections? | Single refs (schema); multi-membership | Schema suggests single refs; approve target | User placement | Product | Open |
-| ORG-D33 | Is Student Section required? | Required; optional; enrollment-derived | Define academic placement | Enrollment | Product | Open |
-| ORG-D34 | Can Manager manage multiple Sections? | One sectionId; multi-section assignment | Schema suggests single Section; approve | Manager scope | Product | Open |
-| ORG-D35 | How is academicBatch validated? | Free text; controlled academic year; section-derived | Define Module 4 relationship | Student placement | Product | Open |
-| ORG-D36 | Exact deny response for unauthorized organization record? | 403; 404; generic deny | Security review | Info leakage | Security/Architecture | Open |
-| ORG-D37 | How are active sessions refreshed after org assignment changes? | Immediate scope refresh; token expiry; revoke session | Module 1 coordination | Access revocation | Security | Open |
-| ORG-D38 | Parent-child integrity and concurrent update strategy? | Transaction; optimistic locking; other | Define implementation-level contract separately | Integrity | Architecture | Open |
-| ORG-D39 | College status cascade to child Department/Section? | None; inherited; explicit transitions | No implicit cascade | Lifecycle | Product | Open |
-| ORG-D40 | Audit/notification events for org changes? | Event list/recipients/retention TBD | Coordinate Modules 13/15 | Traceability | Product/Security | Open |
-| ORG-D41 | College/Department seat fields editable here or Module 3 only? | Module 3 owns; role-specific | Keep seat counters Module 3-owned | Seat consistency | Finance/Product | Open |
-| ORG-D42 | College/Department/Section archive/restore capability? | Archive; deactivate; delete; none | Define reversible lifecycle | Data retention | Product | Open |
+The product owner authorized using recommended answers for the remaining minimal questions. **ORG-D01–ORG-D42 are adopted** as the target product baseline dated 2026-11-06. The complete decision matrix is maintained in [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md).
+
+The adopted baseline supersedes inconsistent decision-gated language earlier in this draft. Key outcomes include:
+- SUPER_ADMIN-only onboarding with review states and explicit, idempotent College creation.
+- College domain means an optional verified primary institutional email domain; seat and payment/subscription ownership stays in Module 3.
+- HOD has limited College identity context and may update assigned Department name/code only.
+- SUPER_ADMIN and assigned HOD manage Sections within scope; Finance Team receives only Department-level summary/aggregate Section counts.
+- HOD assignment is constrained to an active HOD membership in the target College/Department; the Module 1 global User + membership model is authoritative.
+- College, Department and Section use reversible lifecycle/archive behavior; no physical deletion or cascade delete.
+- Parent status gates effective descendant access without rewriting child statuses; College and Subscription statuses remain independent.
+- Parent-child mutations use FK/transaction safeguards and optimistic concurrency; out-of-scope resources return 404 and in-scope unauthorized actions return 403.
+
+The adopted decisions are product baseline, not implementation evidence. Remaining gates are engineering and cross-module contracts: schema migration; canonical RBAC alignment; final Module 1 membership schema; Module 3 billing/seats; Module 4 enrollment; Modules 13/15 notifications and audit; Module 17 transition graphs; and Module 18 conflict/error handling. These dependencies must be completed before the affected features and tests are considered implementation-ready.
 
 ## 16. Acceptance criteria (module-level)
 
@@ -935,7 +922,7 @@ Detailed test cases are in [QA-TEST-CASES.md](./QA-TEST-CASES.md). The QA compan
 - hierarchy integrity and cross-parent tampering;
 - status and delete decision gates.
 
-QA cases that depend on unresolved decisions explicitly mark the expected behavior as decision-gated; they must not be interpreted as approval of a product policy.
+QA expected results for ORG-D01–ORG-D42 are aligned to the adopted baseline. Cases dependent on schema migrations or unfinished cross-module contracts remain blocked until those prerequisites are delivered.
 
 ## 18. Review and approval checklist
 
@@ -945,12 +932,12 @@ QA cases that depend on unresolved decisions explicitly mark the expected behavi
 - [ ] Onboarding, College, Department, Section, HOD assignment, and hierarchy validation functions are specified.
 - [ ] Input fields, source types, validation and field-level uncertainty are documented.
 - [ ] Main flows, data/state changes, success, failure, alternate flows, and edge cases are covered.
-- [ ] Delete/cascade, status transitions, seat counters, and onboarding link decisions remain open where source is silent.
+- [x] ORG-D01–ORG-D42 have an adopted product baseline.\n- [ ] Required schema migrations and canonical RBAC/Module 1–18 contracts are implemented and verified.
 - [ ] Acceptance criteria are observable.
 - [ ] QA tests include preconditions, steps, expected results and traceability.
 - [ ] Dependencies to Modules 1, 3, 4, 10, 13, 15, 17, 18 are documented.
 - [ ] Product/Security/Architecture decisions are recorded and assigned.
-- [ ] No recommendation is presented as approved target behavior.
+- [x] Adopted recommendations are explicitly identified in ADOPTED-DECISIONS.md; implementation dependencies are not represented as completed.
 
 ## 19. Source references
 
@@ -960,6 +947,6 @@ QA cases that depend on unresolved decisions explicitly mark the expected behavi
 - [Page-to-DB Mapping v2](../../docs/source-text/Page%20-%20DB%20Mapping%20v2.md)
 - [RBAC](../../docs/source-text/RBAC.md)
 - [Schema](../../docs/source-text/scheema.md)
-- [Functional Specification Standard](../FUNCTIONAL-SPECIFICATION-STANDARD.md)
+- [Functional Specification Standard](../FUNCTIONAL-SPECIFICATION-STANDARD.md)\n- [Adopted Module 2 decisions](./ADOPTED-DECISIONS.md)\n- [Legacy Module 02 forensic README](../../../functional-spec-from-old%20code/module-02-org/README.md)\n- [Legacy Module 02 forensic specification](../../../functional-spec-from-old%20code/module-02-org/SPECIFICATION.md)
 
-**Review gate:** Module 2 only. Document commit does not approve its target behavior. Product/security/architecture decisions remain open.
+**Review gate:** Module 2 product baseline ORG-D01–ORG-D42 is adopted. This document commit does not mean schema migrations, RBAC updates, APIs, UI, or dependent-module contracts have been implemented or tested.
