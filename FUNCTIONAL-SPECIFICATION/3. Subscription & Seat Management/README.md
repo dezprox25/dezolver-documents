@@ -2,12 +2,12 @@
 
 **Document type:** Functional Specification  
 **Document ID:** DEZ-SUB-FS-003  
-**Version:** 0.2 — Functional Specification Standard v1.0 compliance pass  
-**Status:** Detailed draft — ready for product review; target behavior not approved  
+**Version:** 0.3 — Adopted SaaS pricing, billing and seat-management baseline  
+**Status:** Product baseline adopted (SUB-D01–SUB-D40); schema and cross-module implementation pending  
 **Scope:** Plan catalogue, college subscription, subscription periods and renewal, pricing quotes, invoices, payment transactions, and seat purchase / allocation / usage  
 **QA companion:** [SUB QA Test Cases](./QA-TEST-CASES.md)
 
-> **Specification principle:** This module is grounded in Business Flow v2, RBAC, Page-to-DB Mapping v2, and the schema PDF. The source documents identify entities, roles, screens, and high-level flows, but do not define all billing rules. Missing behavior is marked **TBD / Decision Required** rather than invented.
+> **Evidence boundary:** Original and v2 Business Flow, original and v2 Page–DB Mapping, RBAC and schema are target evidence. Legacy Module 03 is historical functional evidence only. The product owner selected fixed College packages with custom quotes and SUPER_ADMIN-editable commercial settings. SUB-D01–SUB-D40 are adopted target decisions; engineering implementation is separate.
 
 ---
 
@@ -23,6 +23,16 @@ Subscription & Seat Management is closely coupled to College / Department / Sect
 - Department seat allocation and usage
 - Pricing quotes, invoices, and payment transactions
 - Subscription state and access to platform services
+
+## Adopted commercial direction
+
+DEZOLVER uses a **fixed College package** model. A standard Plan has a configured price for a configured duration and includes a configured student-seat allowance. The subscription price is not a fluctuating per-active-student fee. Additional seats are purchased as add-ons. CUSTOM terms are handled through a College-specific PricingQuote.
+
+**SUPER_ADMIN owns the commercial configuration.** The Super Admin can edit standard plans, included seats, feature entitlements, package prices, currencies, duration, add-on seat rates, supported gateways, tax policy, invoice settings, renewal reminders and grace-period settings. The Super Admin can approve custom quotes and explicitly migrate existing subscriptions.
+
+A plan edit creates a new version for future purchases. Existing Colleges retain the contract and feature/seat snapshot they accepted until renewal, unless SUPER_ADMIN performs a separately confirmed migration. This keeps the commercial model flexible without silently changing a paid agreement.
+
+The adopted decision matrix is recorded in [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md). It supersedes earlier TBD wording about product policy; schema and cross-module contracts remain engineering gates.
 
 ## 2. Scope
 
@@ -59,35 +69,19 @@ Subscription & Seat Management is closely coupled to College / Department / Sect
 
 ## 3. Source documents and interpretation
 
-### 3.1 Business Flow v2
+### 3.1 Business Flow — original and v2
 
-The Business Flow v2 describes the following Finance Team flow:
+The original and v2 Business Flow documents show the same billing responsibilities and sequence:
 
-- Finance Team views the plan.
-- Subscription is associated with a Plan.
-- Plan selection includes **DEFAULT** and **CUSTOM**.
-- Subscription includes an **ACTIVE PERIOD**.
-- Subscription includes **RENEWAL**.
+College onboarding by SUPER_ADMIN → College Created → Setup → FINANCE_TEAM → Subscription.
 
-The diagram does not provide a detailed billing/payment sequence or define automatic renewal, grace-period duration, or subscription expiry behavior.
+Finance Team views the Plan, selects a DEFAULT or CUSTOM option, and works with the subscription's active period and renewal. Neither version specifies pricing formulas, tax treatment, payment gateway, trial duration, grace-period duration, invoice schedule, seat-count trigger or subscription access policy. The v2 document adds backend/Judge0 details to academic execution; those changes do not alter the billing model.
 
-### 3.2 RBAC
+### 3.2 Page–DB Mapping — original and v2
 
-The RBAC source describes:
+The original and v2 Page–DB Mapping documents identify the same billing pages and entities:
 
-- SUPER_ADMIN: platform-wide subscription and billing administration.
-- FINANCE_TEAM: college-level subscription and billing operations.
-- HOD: View subscription/billing data as shown in the permission matrix.
-- MANAGER: no subscription/billing permission shown.
-- STUDENT: View own subscription/billing as shown in one RBAC matrix; the page mapping does not show a student billing page (discrepancy to resolve).
-
-RBAC also requires tenant isolation: Finance Team queries must be scoped to the assigned College.
-
-### 3.3 Page - DB Mapping v2
-
-Mapped screens and entities include:
-
-| Role | Page / module | Entities mapped |
+| Role | Page | Mapped entities |
 |---|---|---|
 | SUPER_ADMIN | Dashboard | College, User, Department, Plan, Subscription, Invoice, PaymentTransaction, AuditLog |
 | SUPER_ADMIN | Plan Management | Plan, Subscription |
@@ -99,14 +93,27 @@ Mapped screens and entities include:
 | FINANCE_TEAM | Invoice History | Invoice, Subscription, PaymentTransaction, College |
 | FINANCE_TEAM | Buy More Seats | Plan, Subscription, College |
 
-These mappings confirm the intended page/entity relationships; they do not define detailed UI controls, payment integration, or calculations.
+No separate HOD or Student billing page is mapped.
 
-### 3.4 Schema PDF
+### 3.3 RBAC
 
-The schema includes Plan, CollegeOnboarding, PricingQuote, Subscription, Invoice, PaymentTransaction, College, and Department records. Their fields are documented in Section 8.
+RBAC identifies SUPER_ADMIN as global and FINANCE_TEAM as College-scoped for subscription/billing. The platform matrix grants SUPER_ADMIN Full CRUD, FINANCE_TEAM View/Create/Update, HOD View, MANAGER no billing permission and STUDENT "View own". Every Finance operation must derive College scope from trusted membership/resource relationships, not client-supplied College IDs.
 
----
+The HOD and Student view entries do not have matching billing pages in Page–DB Mapping. Adopted target behavior limits HOD to Department seat summary and removes Student access to College billing records in v1. Canonical RBAC alignment is required.
 
+### 3.4 Schema
+
+The supplied schema represents Plan, PricingQuote, Subscription, Invoice and PaymentTransaction with College and Department seat counters. It names Plan→Subscription, College→Subscription, Subscription→Invoice, College→Invoice, Subscription→PaymentTransaction, College→PaymentTransaction and PricingQuote→PaymentTransaction relationships. The source fields remain documented in the data reference. Adopted schema deltas add version/snapshot, due-date/tax/line-item, refund, webhook and seat-ledger contracts where the current schema is incomplete.
+
+### 3.5 Legacy Module 03 forensic material — historical evidence only
+
+The legacy references are [Module 03 forensic README](../../functional-spec-from-old%20code/module-03-billing/README.md) and [Module 03 forensic specification](../../functional-spec-from-old%20code/module-03-billing/SPECIFICATION.md). They provide function patterns and failure cases, not target business requirements.
+
+The historical report describes Razorpay checkout/order creation, signed webhook processing, subscription activation/upgrade/cancellation, payment retry, renewal jobs, dunning, invoice numbering/PDF generation, payment reconciliation, refunds, rate-limit tiers and college payout settlement. It also reports that actual seat/licensing enforcement did not exist: maxStudents was inert metadata and there was no seat ledger or backend capacity enforcement.
+
+Legacy-only values/behaviors are not adopted: Tenant/Cohort structures, 14-day trial, fixed 30-day period, hardcoded 18% GST, 7/21-day dunning transitions, 80/20 college payouts, event-registration charges/refunds and legacy rate-limit tiers. Reported defects retained as quality/security warnings include invoice/payment IDOR, over-permissive billing route permissions, webhook verification bypass when secret is missing, tenant UUID used as dunning email recipient, invoice-PDF outbox payload mismatch, in-memory subscription scans and fixed-30-day proration drift.
+
+The target remains College-based and uses the supplied Plan/Subscription/Invoice/PaymentTransaction schema as a starting point. Legacy API routes, Tenant IDs, role names, payment schema and cron schedules must not be copied as target requirements.
 ## 4. Roles and permissions
 
 ### 4.1 Source-based permissions
@@ -611,126 +618,39 @@ The following are derived safeguards; detailed business arithmetic remains subje
 
 ---
 
-## 9. Source gaps, conflicts, and risks
+## 9. Source gaps, conflicts and adopted resolution
 
-### 9.1 Student subscription/billing access discrepancy
+The main source documents clearly identify billing roles, pages, commercial entities and high-level lifecycle, but do not specify every commercial rule. These gaps are resolved into the adopted target baseline:
 
-RBAC includes Student “View own” for subscription/billing in a matrix, but Page-to-DB Mapping does not list a Student billing/subscription page.
+- Standard plans use a fixed College package price and included seat allowance; custom terms use an approved quote.
+- SUPER_ADMIN can edit catalogue and billing configuration; plan edits do not silently rewrite existing subscriptions.
+- Additional seats are paid add-ons. Seat use is based on active Student membership, not staff accounts or course enrollment.
+- Renewal is manual by default in v1; reminders and grace duration are configurable.
+- Razorpay is the initial online gateway for India-first configuration; manual transfer may be enabled with SUPER_ADMIN verification. Other gateways require explicit configuration.
+- Tax policy is configurable; legacy 18% GST is not hardcoded.
+- Finance Team access is College-scoped. HOD receives only Department seat summary; Student billing access is not provided in v1 because no Student billing page is mapped.
+- College lifecycle and Subscription lifecycle remain independent.
+- Legacy seat enforcement was absent; target behavior requires a new seat ledger and capacity enforcement.
 
-**Decision required:** should Student see any billing information, or is this RBAC row intended only for college/Finance Team subscription records?
-
-### 9.2 Plan pricing model is not specified
-
-Plan includes `price`, `currency`, `durationMonths`, and `maxStudents`, but the documents do not state whether price is per student, per college, per duration, or a tiered/custom formula.
-
-**Decision required:** approve the billing unit and pricing formula.
-
-### 9.3 Default vs Custom plan semantics
-
-Business Flow shows DEFAULT and CUSTOM, but schema has one Plan model and no plan-type enum.
-
-**Decision required:** define custom plan representation and approval.
-
-### 9.4 PricingQuote status is a string
-
-The schema shows `PricingQuote.status varchar(30)`, with no enum values.
-
-**Decision required:** define allowed quote states and transitions.
-
-### 9.5 Subscription period and renewal date semantics
-
-The schema contains currentPeriodStart, currentPeriodEnd, renewalDate, and gracePeriodEndsAt, but no rules for date equality, time zones, or date extension.
-
-**Decision required:** canonical period/renewal calculations.
-
-### 9.6 Seat counters may overlap
-
-Subscription `purchasedSeats`, College `totalSeats`, College `usedSeats`, Department `allocatedSeats`, Department `usedSeats`, and Plan `maxStudents` all represent related capacity concepts.
-
-**Risk:** independent updates can cause inconsistent seat availability.
-
-**Decision required:** define a canonical capacity source, counter ownership, reconciliation, and seat-counting events.
-
-### 9.7 Payment gateway configuration
-
-Schema lists Stripe, Razorpay, and Manual Bank Transfer. This does not prove all are integrated or enabled.
-
-**Decision required:** which gateway(s) are enabled for the target deployment, and whether manual bank transfer requires Finance Team verification.
-
-### 9.8 Invoice due date and overdue behavior
-
-Invoice has no `dueDate` field in the supplied schema, and InvoiceStatus has no explicit OVERDUE value.
-
-**Decision required:** whether overdue invoices are represented by OPEN plus dates/metadata, another status, or a schema extension.
-
-### 9.9 Refund, partial payment, and payment retry rules
-
-Payment status includes REFUNDED, but the source does not define refund workflows, partial payments, retries, or transaction reversal semantics.
-
-**Decision required:** define financial operations and their authorization/audit requirements.
-
-### 9.10 Subscription status vs College status
-
-College has EntityStatus; Subscription has SubscriptionStatus. The source does not say whether these states are coupled.
-
-**Decision required:** define whether College status overrides subscription status, whether subscription suspension changes College status, and how independent statuses interact.
-
----
-
-## 10. Decisions required before finalization
-
-| ID | Decision | Why it matters |
-|---|---|---|
-| SUB-D01 | Define plan pricing unit: per college, per seat, per month/year, tiered, or custom. | Pricing calculation |
-| SUB-D02 | Define DEFAULT vs CUSTOM plan semantics and who may create/approve custom plans. | Plan administration |
-| SUB-D03 | Define Plan features and whether features are enforced as entitlement flags. | Feature access |
-| SUB-D04 | Define whether multiple subscriptions per College are allowed and what counts as the active subscription. | Data model and billing |
-| SUB-D05 | Define initial subscription activation sequence: quote, invoice, payment, activation. | Onboarding flow |
-| SUB-D06 | Define whether PricingQuote is required for every purchase or only custom/onboarding purchases. | Quote workflow |
-| SUB-D07 | Define PricingQuote status values, approval, expiry, revision, and acceptance. | Quote lifecycle |
-| SUB-D08 | Define tax and discount formulas, rounding, and currency policy. | Financial accuracy |
-| SUB-D09 | Define renewal mode (manual/automatic) and reminder schedule. | Renewal behavior |
-| SUB-D10 | Define renewal date calculation and timezone convention. | Period consistency |
-| SUB-D11 | Define grace-period duration and allowed features during grace. | Access policy |
-| SUB-D12 | Define suspension/cancellation policy, timing, reversibility, and refund handling. | Subscription lifecycle |
-| SUB-D13 | Define which roles may create/update/suspend/cancel subscriptions and manage invoices/payments. | RBAC |
-| SUB-D14 | Define which payment gateway(s) are active and how manual bank transfers are verified. | Payment integration |
-| SUB-D15 | Define payment webhook/callback confirmation and transaction reconciliation. | Payment correctness |
-| SUB-D16 | Define partial payments, retries, refunds, and duplicate transaction behavior. | Financial operations |
-| SUB-D17 | Define invoice numbering, due date, line items, PDF generation, and void/unc collectible process. | Invoice lifecycle |
-| SUB-D18 | Define whether Student billing access exists or remove/clarify the RBAC “View own” entry. | UI/RBAC consistency |
-| SUB-D19 | Define seat counting event: user creation, activation, enrollment, or another trigger. | Seat usage |
-| SUB-D20 | Define canonical relationship between Plan.maxStudents, Subscription.purchasedSeats, College.totalSeats, and College.usedSeats. | Capacity model |
-| SUB-D21 | Define department seat allocation, over-allocation prevention, reallocation, and usedSeats updates. | Department capacity |
-| SUB-D22 | Define Buy More Seats quantity semantics, proration, quote/invoice/payment flow, and effective date. | Seat purchase |
-| SUB-D23 | Define whether seat reduction is allowed and what happens if current usage exceeds the reduced capacity. | Capacity enforcement |
-| SUB-D24 | Define access behavior when subscription expires, is in grace period, is suspended, or is cancelled. | Platform access |
-| SUB-D25 | Define interaction between College status and Subscription status. | Tenant lifecycle |
-| SUB-D26 | Define whether existing subscribers are affected when a Plan is edited or deactivated. | Plan versioning |
-| SUB-D27 | Define audit events and notifications for billing/renewal/payment operations in Modules 13 and 15. | Traceability |
-| SUB-D28 | Define how quote, invoice, and transaction records are retained and corrected. | Financial history |
-
----
+See [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md). Remaining questions are engineering/schema/cross-module implementation gates rather than unresolved product pricing choices.
 
 ## 11. Acceptance checklist
 
-Module 3 is implementation-ready when:
+- [x] Fixed College package pricing model adopted; custom quotes supported.
+- [x] SUPER_ADMIN owns editable Plan and billing configuration.
+- [x] Plan versioning and existing-subscription protection adopted.
+- [x] Subscription, renewal, grace, suspension and cancellation baseline adopted.
+- [x] Quote, invoice and payment responsibilities and permissions adopted.
+- [x] College/Department seat capacity, allocation, counting and enforcement adopted.
+- [x] Finance Team College isolation and HOD/Student visibility boundaries adopted.
+- [ ] Required schema migrations and indexes implemented.
+- [ ] Canonical RBAC and Modules 1/2 membership/seat ownership contracts aligned.
+- [ ] Payment gateway, webhook verification and manual transfer process configured.
+- [ ] Invoice numbering, tax, PDF storage and billing settings implemented.
+- [ ] Modules 13, 15, 17 and 18 notifications/audit/state-machine/failure contracts integrated.
+- [ ] QA cases executed in a test environment and signed off.
 
-- [ ] Plan pricing units and DEFAULT/CUSTOM behavior are approved.
-- [ ] Plan feature entitlements and maxStudents behavior are defined.
-- [ ] Subscription creation and activation sequence is finalized.
-- [ ] Subscription status transitions and access behavior are defined.
-- [ ] Renewal and grace-period rules are finalized.
-- [ ] Invoice generation, numbering, due date, PDF, and status rules are defined.
-- [ ] Payment gateway, confirmation, idempotency, retries, and refunds are defined.
-- [ ] Buy More Seats workflow and proration/effective-date rules are approved.
-- [ ] Seat counting and College/Department counter reconciliation are defined.
-- [ ] Finance Team and SUPER_ADMIN permissions are explicit and tenant-scoped.
-- [ ] Student billing access discrepancy is resolved.
-- [ ] Subscription/College status interaction is defined.
-- [ ] Billing audit and notification requirements are coordinated with Modules 13 and 15.
-
----
+**Readiness distinction:** Product decisions SUB-D01–SUB-D40 are adopted. Module 3 is not implementation-ready until unchecked engineering and cross-module gates are complete.
 
 ## 12. Dependencies and interfaces
 
@@ -746,54 +666,55 @@ Module 3 is implementation-ready when:
 
 ## 13. Source references
 
-- DEZOLVER Drive: **Business Flow v2.pdf**
-- DEZOLVER Drive: **RBAC (1).pdf**
-- DEZOLVER Drive: **scheema.pdf**
-- DEZOLVER Drive: **Page - DB Mapping v2.pdf**
+**Target source documents**
+- [Business Flow — original](../../docs/source-text/Business%20Flow.md)
+- [Business Flow v2](../../docs/source-text/Business%20Flow%20v2.md)
+- [Page–DB Mapping — original](../../docs/source-text/Page%20-%20DB%20Mapping.md)
+- [Page–DB Mapping v2](../../docs/source-text/Page%20-%20DB%20Mapping%20v2.md)
+- [RBAC](../../docs/source-text/RBAC.md)
+- [Database schema](../../docs/source-text/scheema.md)
+- [Functional Specification Standard](../FUNCTIONAL-SPECIFICATION-STANDARD.md)
 
-Drive links:
-- [Business Flow v2.pdf](https://drive.google.com/file/d/1rE9q1h0u9FTVLJmlP2Wl7WWfKFqsETgL/view)
-- [RBAC (1).pdf](https://drive.google.com/file/d/1Z_q_3N4cd2cKljAmUZnpHIWyGXPFBg3W/view)
-- [scheema.pdf](https://drive.google.com/file/d/10_LGfTsQ2eGmbJM5tQE9Pkmlwhft1lAI/view)
-- [Page - DB Mapping v2.pdf](https://drive.google.com/file/d/1UdzowkDPP85PNI0-GQ2k4cEmwIIAZYcw/view)
+**Historical functional evidence only**
+- [Legacy Module 03 README](../../functional-spec-from-old%20code/module-03-billing/README.md)
+- [Legacy Module 03 forensic specification](../../functional-spec-from-old%20code/module-03-billing/SPECIFICATION.md)
 
-**Review gate:** Module 3 only. Do not begin Module 4 until the user reviews this document and explicitly approves proceeding.
-
-
----
+**Adopted decisions and QA**
+- [SUB-D01–SUB-D40](./ADOPTED-DECISIONS.md)
+- [Module 3 QA cases](./QA-TEST-CASES.md)
 
 # Functional Specification Standard v1.0 — compliance supplement
 
-The existing source-based content above remains the source summary and high-level requirement baseline. The following function inventory and function-level contracts expand it to the authoring standard. This is not an approval of the open financial/product decisions.
+The existing source-based content above remains the source summary and high-level requirement baseline. The following function inventory and function-level contracts expand it to the authoring standard. Product decisions SUB-D01–SUB-D40 are adopted. The function-level contracts below are interpreted together with Section 21 and ADOPTED-DECISIONS.md; earlier TBD wording that conflicts with adopted product policy is superseded. Remaining schema and integration work is an engineering gate.
 
 ## 14. Function inventory
 
-| ID | Function | Actor | Type | Status |
+| ID | Function | Primary actor | Type | Adopted target status |
 |---|---|---|---|---|
-| SUB-F001 | View/manage Plan catalogue | SUPER_ADMIN | CRUD/read | Decision required |
-| SUB-F002 | Configure DEFAULT/CUSTOM plan | SUPER_ADMIN | Configuration | Decision required |
-| SUB-F003 | View College subscription | SUPER_ADMIN/Finance Team/HOD as permitted | Read | Draft |
-| SUB-F004 | Create subscription | SUPER_ADMIN/Finance Team permission TBD | Workflow/create | Decision required |
-| SUB-F005 | Update subscription | SUPER_ADMIN/Finance Team scoped | Update | Decision required |
-| SUB-F006 | Change subscription status | SUPER_ADMIN/Finance Team permission TBD | Lifecycle | Decision required |
-| SUB-F007 | View active period and renewal dates | SUPER_ADMIN/Finance Team/HOD view | Read | Draft |
-| SUB-F008 | Renew subscription | Finance Team/SUPER_ADMIN | Workflow | Decision required |
-| SUB-F009 | Apply grace period | System/authorized admin | Lifecycle | Decision required |
-| SUB-F010 | Suspend/cancel subscription | SUPER_ADMIN/Finance Team permission TBD | Lifecycle | Decision required |
-| SUB-F011 | Create/view/update PricingQuote | SUPER_ADMIN/Finance Team permission TBD | Quote workflow | Decision required |
-| SUB-F012 | Calculate quote amounts | System | Calculation | Decision required |
-| SUB-F013 | Buy More Seats | Finance Team | Purchase workflow | Decision required |
-| SUB-F014 | View and reconcile College/Department seats | Finance Team/SUPER_ADMIN | Read/reconciliation | Decision required |
-| SUB-F015 | Allocate seats to Department | Finance Team/HOD permission TBD | Allocation | Decision required |
-| SUB-F016 | Determine seat usage | System/Module 1 or 4 trigger | Calculation | Decision required |
-| SUB-F017 | Generate/manage invoice | SUPER_ADMIN/Finance Team | Billing workflow | Decision required |
-| SUB-F018 | View/download invoice | SUPER_ADMIN/Finance Team/HOD/student access TBD | Read | Decision required |
-| SUB-F019 | Initiate/record payment | Finance Team/SUPER_ADMIN/gateway | Payment workflow | Decision required |
-| SUB-F020 | Process payment result and reconciliation | Gateway/Finance Team/system | System workflow | Decision required |
-| SUB-F021 | Link payment, invoice, quote and subscription | System | Data integrity | Derived |
-| SUB-F022 | Enforce billing/seat scope and access entitlements | System | Security/authorization | Derived |
-| SUB-F023 | Handle subscription access gating | System | Authorization/lifecycle | Decision required |
-| SUB-F024 | Audit billing and subscription changes | System | Audit integration | Module 15 dependency |
+| SUB-F001 | View/manage Plan catalogue | SUPER_ADMIN | Catalogue/configuration | Adopted |
+| SUB-F002 | Configure DEFAULT/CUSTOM plan | SUPER_ADMIN; FINANCE_TEAM request/select | Configuration/quote | Adopted |
+| SUB-F003 | View College subscription | SUPER_ADMIN/FINANCE_TEAM | Read | Adopted |
+| SUB-F004 | Create subscription | SUPER_ADMIN/FINANCE_TEAM | Purchase workflow | Adopted |
+| SUB-F005 | Update subscription terms | SUPER_ADMIN; FINANCE_TEAM limited requests | Update | Adopted |
+| SUB-F006 | Change subscription status | System/SUPER_ADMIN | Lifecycle | Adopted |
+| SUB-F007 | View active period and renewal dates | SUPER_ADMIN/FINANCE_TEAM | Read | Adopted |
+| SUB-F008 | Renew subscription | FINANCE_TEAM/SUPER_ADMIN | Workflow | Adopted |
+| SUB-F009 | Apply grace period | System/SUPER_ADMIN override | Lifecycle | Adopted |
+| SUB-F010 | Suspend/cancel subscription | System/SUPER_ADMIN; FINANCE_TEAM request | Lifecycle | Adopted |
+| SUB-F011 | Create/view/update PricingQuote | SUPER_ADMIN; FINANCE_TEAM request/view | Quote workflow | Adopted |
+| SUB-F012 | Calculate quote amounts | System/SUPER_ADMIN configures rules | Calculation | Adopted |
+| SUB-F013 | Buy More Seats | FINANCE_TEAM/SUPER_ADMIN | Add-on purchase | Adopted |
+| SUB-F014 | View/reconcile College/Department seats | SUPER_ADMIN/FINANCE_TEAM; HOD summary | Read/reconciliation | Adopted |
+| SUB-F015 | Allocate seats to Department | FINANCE_TEAM; SUPER_ADMIN override | Allocation | Adopted |
+| SUB-F016 | Determine seat usage | System from Module 1 membership event | Calculation | Adopted |
+| SUB-F017 | Generate/manage Invoice | System/SUPER_ADMIN | Billing workflow | Adopted |
+| SUB-F018 | View/download Invoice | SUPER_ADMIN/assigned FINANCE_TEAM | Read | Adopted |
+| SUB-F019 | Initiate/record PaymentTransaction | FINANCE_TEAM/SUPER_ADMIN/gateway | Payment workflow | Adopted |
+| SUB-F020 | Process payment result/reconciliation | Verified gateway/SUPER_ADMIN/system | System workflow | Adopted |
+| SUB-F021 | Link payment, invoice, quote and subscription | System | Data integrity | Adopted |
+| SUB-F022 | Enforce billing/seat scope | Backend authorization | Security | Adopted |
+| SUB-F023 | Apply subscription access gating | System | Entitlement/lifecycle | Adopted |
+| SUB-F024 | Audit billing/subscription changes | System/Module 15 | Audit integration | Adopted |
 
 ## 15. Function-level specification supplement
 
@@ -1193,3 +1114,46 @@ Module 3 is ready for product review when:
 - Dependencies on Modules 1, 2, 4, 13, 15, 17 and 18 are explicit.
 
 **Review gate:** Module 3 only. Commit status means document versioning, not approval of billing/financial behavior. Do not treat any recommendation or open decision as implementation-ready.
+
+
+## 21. Adopted function behavior — implementation reference
+
+This is the authoritative behavior overlay for SUB-F001–SUB-F024. It resolves commercial policy while preserving function-level inputs, evidence traceability and QA references above.
+
+| Function | Adopted behavior | Main validation / control |
+|---|---|---|
+| SUB-F001 — Plan catalogue | SUPER_ADMIN creates, views, edits, versions, publishes, activates and deactivates standard packages. Editable settings include price/currency/duration, included seats, feature entitlements, add-on rate/pack, default status and effective dates. | Stable unique code; valid price, duration, seats, currency and feature keys; optimistic version check; audit every change. |
+| SUB-F002 — DEFAULT/CUSTOM | Finance selects an active DEFAULT package or requests CUSTOM terms. SUPER_ADMIN creates and approves custom quote. | CUSTOM cannot be accepted before approval or after expiry; no client-side price override. |
+| SUB-F003 — View subscription | SUPER_ADMIN sees platform-wide subscriptions; FINANCE_TEAM sees its assigned College and history. HOD sees only Department seat allocation/usage summary. | Resolve scope from trusted membership/resource; foreign IDs return 404. |
+| SUB-F004 — Create subscription | After Module 2 creates the College and Finance Team is assigned, Finance selects a DEFAULT Plan or accepted custom quote. Create PENDING subscription and billing references. | Valid College/Plan/quote; one current effective primary subscription; not ACTIVE before verified payment. |
+| SUB-F005 — Update terms | Finance initiates purchase/renewal/add-on and updates approved billing-contact fields. SUPER_ADMIN explicitly migrates contracted terms. | Finance cannot directly edit paid price, seats, dates or payment-derived status. Migration needs impact preview, effective date, reason and audit. |
+| SUB-F006 — Status | Verified payment changes PENDING→ACTIVE; unpaid renewal at boundary enters GRACE_PERIOD; grace expiry changes to SUSPENDED; authorized cancellation changes to CANCELLED at effective time. | Apply Module 17 transitions, current version and actor checks; College status remains independent. |
+| SUB-F007 — Period display | Display Plan version, package term, included/purchased seats, period, next renewal and grace end. | UTC storage; configured billing timezone display (initially Asia/Kolkata); renewalDate equals period boundary. |
+| SUB-F008 — Renewal | Manual renewal is v1 default. Finance starts renewal, receives invoice and pays via enabled method. Next period begins at existing end boundary after verified settlement. | Idempotent per subscription/period; no double charge or date extension; reminders configurable. |
+| SUB-F009 — Grace | Unpaid renewal enters GRACE_PERIOD. Existing contracted features remain; new seat purchases and feature expansion are blocked. | Initial configured default 7 calendar days, editable by SUPER_ADMIN; grace expiry suspends unless paid. |
+| SUB-F010 — Suspend/cancel | Non-payment suspension follows grace expiry. Finance may request period-end cancellation. SUPER_ADMIN may suspend or immediately cancel with reason. | Refund separate; no College status mutation; audit status changes. |
+| SUB-F011 — Quote | Finance requests quote for its College. SUPER_ADMIN drafts, edits, sends, approves, rejects, withdraws or reissues. Quote supports onboarding and existing College. | Valid target College/onboarding and Plan; accepted snapshot immutable; validUntil enforced. |
+| SUB-F012 — Pricing | Calculate fixed package plus add-ons, less approved discount, plus configured tax. Persist line/tax breakdown and total. | Discount cannot exceed subtotal; currency/tax policy required; safe decimal arithmetic. |
+| SUB-F013 — Buy More Seats | Finance enters additional quantity. Use Super Admin configured add-on rate/pack and default remaining-term calendar-day proration. After payment, increase Subscription.purchasedSeats and College.totalSeats; period end unchanged. | No capacity change on pending/failed payment; idempotency and transaction lock prevent oversell. |
+| SUB-F014 — Seat view/reconciliation | Show Plan included seats, Subscription purchasedSeats, College total/used, Department allocated/used and unallocated capacity. | College.totalSeats mirrors current purchasedSeats; usedSeats comes from active Student seat ledger. |
+| SUB-F015 — Department allocation | Finance allocates College capacity among Departments; HOD reads its assigned Department summary. | Sum allocations ≤ College capacity; usedSeats ≤ allocation; cannot reduce below current usage. |
+| SUB-F016 — Seat usage | Consume one seat when Student membership becomes ACTIVE in a College. Pending invites/staff excluded; count a User once per College. | Unique active User+College assignment; idempotent events; deactivation releases once; transfers reconcile. |
+| SUB-F017 — Invoice | Generate for initial purchase, renewal, custom purchase and seat add-on. | Unique atomic number; immutable line/tax snapshot; configured due date; idempotent trigger. |
+| SUB-F018 — Invoice access | SUPER_ADMIN global; Finance Team assigned-College read/download. HOD/Student/Manager do not see invoice/payment data in v1. | Authenticated scope checks; short-lived signed PDF URL; no public storage access. |
+| SUB-F019 — Payment initiation | Finance initiates enabled gateway or submits manual transfer evidence. Razorpay is initial online gateway; manual transfer optional. | Create PENDING transaction; validate amount/currency/same-College links; never accept client-supplied SUCCESS. |
+| SUB-F020 — Payment result | Verify webhook signature and event identity; process once; reconcile. SUPER_ADMIN confirms manual bank transfer. | Missing/invalid secret fails closed; duplicate/out-of-order events idempotent; failures retry safely. |
+| SUB-F021 — Record links | Link payment to relevant College, invoice, subscription and/or quote by transaction type. | Validate every FK and same-College/same-currency relationship. |
+| SUB-F022 — Scope | SUPER_ADMIN global; Finance Team assigned College; HOD seat summary only; Manager/Student no billing resources. | Backend enforces role, membership and resource scope on list/detail/export/PDF/mutation. |
+| SUB-F023 — Entitlement | ACTIVE in-period subscription plus ACTIVE College grants contracted features. GRACE preserves existing features; SUSPENDED/CANCELLED block paid academic features but retain limited billing settlement/support. | Check seat capacity at Student activation; no new seats during grace; Module 2 College gate remains independent. |
+| SUB-F024 — Audit | Log Plan versions, quotes, subscription changes, invoices, payment attempts/confirmation/refunds, seat purchases/allocations/overrides and entitlement impact. | Actor, target, College, action, timestamp, effective date/reason; no secrets; Module 15 defines retention. |
+
+## 22. Implementation and review gate
+
+1. Implement schema deltas in ADOPTED-DECISIONS.md: Plan version/snapshot, College-linked quotes, invoice due/line/tax data, webhook events, refunds and Student seat ledger.
+2. Align Module 1 membership events and Module 2 ownership of hierarchy/College status. Module 3 owns capacity/counters; Module 2 displays them read-only.
+3. Update canonical RBAC for Plan management, Finance billing, HOD seat summary and Student billing exclusion.
+4. Implement Super Admin billing settings and secure gateway configuration.
+5. Integrate invoice/PDF, webhook verification, reconciliation, audit, notifications and state machines.
+6. Execute QA against the implementation. A document commit is not proof that code, gateway credentials, tax configuration or financial operations are live.
+
+**Review gate:** Fixed College packages, custom quotes and SUPER_ADMIN editability are adopted. SUB-D01–SUB-D40 product decisions are complete; engineering/schema/cross-module prerequisites remain open.

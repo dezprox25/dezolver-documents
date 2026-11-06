@@ -20,9 +20,9 @@ All module upgrades must follow the [Functional Specification Standard](./FUNCTI
 
 | # | Module | Current repository status |
 |---|---|---|
-| 1 | [Authentication & User Lifecycle](./1.%20Authentication%20%26%20User%20Lifecycle/README.md) | Detailed draft — Standard v1.0 aligned; QA appendix added; product review pending; decisions open |
-| 2 | [College / Department / Section Management](./2.%20College%20-%20Department%20-%20Section%20Management/README.md) | Detailed draft — Standard v1.0 aligned; QA appendix added; product review pending; decisions open |
-| 3 | [Subscription & Seat Management](./3.%20Subscription%20%26%20Seat%20Management/README.md) | Detailed draft — Standard v1.0 aligned; QA appendix added; product review pending; decisions open |
+| 1 | [Authentication & User Lifecycle](./1.%20Authentication%20%26%20User%20Lifecycle/README.md) | Target baseline approved (AUTH-D01–AUTH-D25); QA present; documentation cleanup and cross-module implementation pending |
+| 2 | [College / Department / Section Management](./2.%20College%20-%20Department%20-%20Section%20Management/README.md) | Target baseline adopted (ORG-D01–ORG-D42); QA and decision record present; schema/RBAC implementation pending |
+| 3 | [Subscription & Seat Management](./3.%20Subscription%20%26%20Seat%20Management/README.md) | Target baseline adopted (SUB-D01–SUB-D40); 24 function specs, QA companion and decision record; engineering implementation pending |
 | 4 | [Course & Enrollment](./4.%20Course%20%26%20Enrollment/README.md) | Detailed draft — Standard v1.0 aligned; function-level spec + QA companion; product review pending; decisions open |
 | 5 | [Problem Management](./5.%20Problem%20Management/README.md) | Detailed draft — Standard v1.0 aligned; 25 function specs + QA companion (170 cases); product review pending; decisions open |
 | 6 | [Code Submission & Judge0](./6.%20Code%20Submission%20%26%20Judge0/README.md) | Detailed draft — Standard v1.0 aligned; QA companion (120 cases); product/architecture/security review pending; decisions open |
