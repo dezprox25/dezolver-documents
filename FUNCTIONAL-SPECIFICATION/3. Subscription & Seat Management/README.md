@@ -628,7 +628,7 @@ See [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md). Remaining questions are engi
 
 The product owner selected fixed College packages, approved custom quote support and confirmed that SUPER_ADMIN must be able to edit the commercial catalogue and settings. The complete adopted baseline is SUB-D01–SUB-D40 in [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md).
 
-This record supersedes any earlier TBD/Decision Required language in source-derived sections. The legacy functional reconstruction remains historical evidence only. Schema and cross-module items listed as implementation gates are not additional product questions.
+This record supersedes any earlier unresolved-decision language in source-derived sections. The legacy functional reconstruction remains historical evidence only. Schema and cross-module items listed as implementation gates are not additional product questions.
 
 ## 11. Acceptance checklist
 
@@ -681,7 +681,7 @@ This record supersedes any earlier TBD/Decision Required language in source-deri
 
 # Functional Specification Standard v1.0 — compliance supplement
 
-The existing source-based content above remains the source summary and high-level requirement baseline. The following function inventory and function-level contracts expand it to the authoring standard. Product decisions SUB-D01–SUB-D40 are adopted. The function-level contracts below are interpreted together with Section 21 and ADOPTED-DECISIONS.md; earlier TBD wording that conflicts with adopted product policy is superseded. Remaining schema and integration work is an engineering gate.
+The existing source-based content above remains the source summary and high-level requirement baseline. The following function inventory and function-level contracts expand it to the authoring standard. Product decisions SUB-D01–SUB-D40 are adopted. The function-level contracts below are interpreted together with Section 21 and ADOPTED-DECISIONS.md; earlier unresolved wording that conflicts with adopted product policy is superseded. Remaining schema and integration work is an engineering gate.
 
 ## 14. Function inventory
 
@@ -746,7 +746,7 @@ The detail below follows the Standard’s required questions. Function-specific 
 - **Flow:** display approved available choices → actor selects → system validates role and eligibility → persist selected plan/quote association according to approved model.
 - **Rule:** DEFAULT selects a standard catalogue Plan. CUSTOM selects only an approved PricingQuote; no unsupported Plan enum or client-controlled override is introduced.
 - **Data:** Plan, PricingQuote and Subscription link the accepted commercial terms; accepted quotes are immutable.
-- **Failure:** inactive plan selection, expired quote, or unauthorized custom selection behavior TBD.
+- **Failure:** inactive Plan, expired quote or unauthorized custom selection is rejected without creating a Subscription.
 - **Acceptance:** system only offers/selects categories after semantics are approved; CUSTOM cannot silently bypass pricing/capacity policy.
 - **QA:** SUB-QA-007–010.
 - **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
@@ -830,7 +830,7 @@ The detail below follows the Standard’s required questions. Function-specific 
 - **Inputs:** subscription, renewal term/plan/seats, quote/invoice/payment references as approved.
 - **Flow:** show renewal options → validate subscription and scope → calculate quote using approved pricing rules → create billing records if required → payment confirmation → update period/status only when approved success condition occurs.
 - **Rules:** do not extend period from payment time vs existing end date without approved rule; do not presume auto-renewal.
-- **Failure:** payment failure, quote expiry, renewal race, subscription already renewed, gateway unavailable → decision-gated.
+- **Failure:** payment failure leaves the renewal unpaid; expired quote is rejected; concurrent/repeated renewal is idempotent or returns conflict; gateway outage leaves the transaction pending for reconciliation.
 - **Acceptance:** dates/status change only after approved renewal conditions; duplicate renewal does not create duplicate periods/charges.
 - **QA:** SUB-QA-034–039.
 - **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
@@ -842,7 +842,7 @@ The detail below follows the Standard’s required questions. Function-specific 
 - **Input:** subscription and configured grace duration; grace end timestamp is calculated and stored.
 - **Flow:** approved event triggers grace → validate transition → store status/gracePeriodEndsAt → access policy applied via Module 17/1.
 - **Rules:** configured initial default is 7 calendar days; existing entitlements remain while new seats/expansion are blocked; grace expiry suspends unless payment succeeds.
-- **Failure:** invalid grace end, repeated grace extension, grace expiry processing → TBD.
+- **Failure:** invalid grace boundary is rejected; repeated extension requires SUPER_ADMIN override and audit; expiry transitions to SUSPENDED unless payment is confirmed.
 - **Acceptance:** grace state and timestamp follow approved policy; downstream entitlement is not assumed.
 - **QA:** SUB-QA-040–043.
 - **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
@@ -854,7 +854,7 @@ The detail below follows the Standard’s required questions. Function-specific 
 - **Inputs:** action, effective timing, reason, refund/cancellation context if approved.
 - **Flow:** request → authorize and scope-check → validate transition → confirm if policy requires → set state/effective dates → audit.
 - **Rules:** period-end is default for Finance request; immediate cancellation requires SUPER_ADMIN reason; refund is separate; College status is independent.
-- **Failure:** already suspended/cancelled, unauthorized College, dependent financial action failure → behavior TBD.
+- **Failure:** invalid repeat transition is rejected; foreign College returns 404; failed dependent billing action is retained for reconciliation without losing history.
 - **Acceptance:** state change is permitted only by approved transition/permission; refund and College status do not change automatically.
 - **QA:** SUB-QA-044–047.
 - **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
@@ -866,7 +866,7 @@ The detail below follows the Standard’s required questions. Function-specific 
 - **Inputs:** collegeOnboardingId, planId, studentCount, baseAmount, discountAmount, taxAmount, totalAmount, currency, status, validUntil, createdById.
 - **Flow:** select onboarding/Plan → enter approved quote parameters → server checks scope and allowed plan → quote calculated per approved formula → save quote → display reference/expiry.
 - **Rules:** status values are DRAFT/SENT/ACCEPTED/REJECTED/EXPIRED/WITHDRAWN; accepted quotes are immutable; DEFAULT purchase does not require a quote; CUSTOM purchase does.
-- **Failure:** invalid Plan/onboarding, expired quote, duplicate/revision race, invalid currency → reject/decision-gated.
+- **Failure:** invalid Plan/College/onboarding or unsupported currency is rejected; expired quote is EXPIRED; concurrent quote revision uses version checks and preserves prior versions.
 - **Acceptance:** quote links to valid Plan and onboarding record; actor scope enforced; amounts are not invented or recalculated under unapproved formula.
 - **QA:** SUB-QA-048–053.
 - **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
@@ -890,7 +890,7 @@ The detail below follows the Standard’s required questions. Function-specific 
 - **Inputs:** selected current Subscription and additional seat quantity; add-on rate/pack and proration come from SUPER_ADMIN configuration.
 - **Flow:** open Buy More Seats → load current plan/seat data → choose quantity under approved semantics → quote/proration policy applied → invoice/payment workflow if required → capacity update on approved effective event.
 - **Rules:** purchase is additive, prorated by remaining calendar days by default, effective only after verified payment, and shares the current period end.
-- **Failure:** no active subscription, seat max reached, payment fails, duplicate click, concurrent purchase → decision-gated.
+- **Failure:** ineligible subscription/College blocks purchase; payment failure does not increase capacity; duplicate request is idempotent; concurrent purchases serialize and cannot oversell.
 - **Acceptance:** capacity is increased only on approved confirmation; Finance Team cannot purchase/update another College's seats.
 - **QA:** SUB-QA-058–064.
 - **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
@@ -937,7 +937,7 @@ The detail below follows the Standard’s required questions. Function-specific 
 - **Inputs:** subscriptionId, collegeId, amount, taxAmount, currency, status, invoiceNumber, pdfUrl, paidAt.
 - **Flow:** approved billing event → invoice generation policy → validate subscription/College → assign invoice number and totals → persist Invoice → expose permitted invoice.
 - **Rules:** schema requires dueAt, issuedAt, immutable line/tax snapshot and correction linkage; OPEN plus dueAt derives overdue; correction uses VOID/replacement.
-- **Failure:** duplicate invoice trigger, invalid subscription, invoice number conflict, PDF generation failure → policy TBD.
+- **Failure:** duplicate trigger returns original invoice; invalid parent is rejected; invoice-number conflict retries atomically; PDF generation is retryable and does not invalidate the invoice.
 - **Acceptance:** invoice links to valid Subscription/College; no unauthorized invoice access; duplicate trigger follows idempotency rule.
 - **QA:** SUB-QA-079–084.
 - **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
