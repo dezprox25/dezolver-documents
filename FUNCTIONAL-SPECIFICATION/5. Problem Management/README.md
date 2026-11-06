@@ -1,11 +1,11 @@
 # 5. Problem Management
 
 **Document type:** Functional Specification  
-**Version:** 0.2 — Detailed draft aligned to Functional Specification Standard v1.0  
-**Status:** Detailed draft — ready for product review; target behavior and decisions remain unapproved  
+**Version:** 1.0 — Adopted target baseline  
+**Status:** Product decisions adopted (PROB-D01–PROB-D25); schema and engineering gates remain  
 **Scope:** Problem authoring, metadata, access scope, publication, and TestCase management. Submission execution and evaluation belong to Modules 6–7.
 
-> This draft is based on Business Flow v2, Page-to-DB Mapping v2, and the schema reconstruction in the repository. Source-confirmed facts, derived safeguards, and unresolved decisions are distinguished. Missing behavior is not silently assumed.
+> This baseline reconciles Business Flow (original/v2), Page–DB Mapping (original/v2), RBAC, target schema, Module 4 adopted decisions, Modules 6–7 interfaces, and reviewed legacy Module 05 documentation. Sections 25–27 and ADOPTED-DECISIONS.md are normative where earlier draft passages retain TBD wording.
 
 ## 1. Purpose
 
@@ -49,7 +49,7 @@ Problems are reusable content used in:
 
 ## 3. Source documents and interpretation
 
-### 3.1 Business Flow v2
+### 3.1 Business Flow (original and v2)
 
 The source flow establishes:
 - HOD manages Problems within the Department academic structure.
@@ -60,7 +60,7 @@ The source flow establishes:
 
 It does not describe Problem authoring screens, publication rules, or detailed permissions.
 
-### 3.2 Page-to-DB Mapping v2
+### 3.2 Page-to-DB Mapping (original and v2)
 
 | Role | Page | Problem-related entities |
 |---|---|---|
@@ -73,7 +73,7 @@ It does not describe Problem authoring screens, publication rules, or detailed p
 | Student | Practice Problems | Problem, TestCase, CodeSubmission, User |
 | Student | Contests | Contest, ContestProblem, ContestParticipant, ContestScoreRank, Problem, Group, GroupMember, GroupContest, CodeSubmission |
 
-The mapping confirms entity/page associations, not complete UI behavior or action permissions.
+The original and v2 mappings confirm entity/page associations, not complete UI behavior or all action permissions. Platform, page, and API RBAC matrices were also reviewed; adopted conflicts are resolved in Sections 16 and 25.
 
 ### 3.3 Schema reconstruction
 
@@ -496,11 +496,11 @@ These are derived safeguards; business-specific ranges/policies remain TBD.
 
 ### 9.1 Problem publication status is absent
 
-Problem has isPublic and scope but no status field in the reconstructed schema.
+Problem has isPublic and scope but no status field in the reconstructed schema; adopted lifecycle and schema delta are in Sections 25.4 and 26.
 
 **Risk:** draft/published/archive behavior could be implemented inconsistently.
 
-**Decision:** confirm whether Problem uses a lifecycle field or whether visibility is controlled by isPublic, scope, and activity association.
+**Adopted:** Problem.status uses DRAFT/PUBLISHED/ARCHIVED; see Section 25.4 and schema delta Section 26.
 
 ### 9.2 Public visibility and tenant scope may conflict
 
@@ -508,7 +508,7 @@ Problem has both isPublic and scope.
 
 **Risk:** public visibility could unintentionally bypass College/Department restrictions.
 
-**Decision:** define a visibility matrix across role, isPublic, scope, College, Department, academicBatch, and assignment context.
+**Adopted:** see the normative visibility matrix in Section 25.3.
 
 ### 9.3 Hidden TestCase confidentiality
 
@@ -542,58 +542,34 @@ Problems are referenced by multiple activity types.
 
 ---
 
-## 10. Decisions required before finalization
+## 10. Adopted product decision register
 
-| ID | Decision | Why it matters |
-|---|---|---|
-| PROB-D01 | Define create/edit/publish/archive/delete permissions for HOD, Manager, SUPER_ADMIN, and other roles. | RBAC |
-| PROB-D02 | Confirm whether Problem has a lifecycle status field. | Publication |
-| PROB-D03 | Define isPublic meaning (global public, authenticated platform users, College-wide, etc.). | Access |
-| PROB-D04 | Define combined isPublic/scope/College/Department/batch/activity visibility rules. | Tenant security |
-| PROB-D05 | Define ContentScope semantics for Problems. | Visibility |
-| PROB-D06 | Define required Problem fields and statement editor/format. | Authoring |
-| PROB-D07 | Define title uniqueness and validation. | Data quality |
-| PROB-D08 | Define tag catalogue/free-form behavior, casing, and duplicate rules. | Filtering |
-| PROB-D09 | Define academicBatch format and multi-batch support. | Eligibility |
-| PROB-D10 | Define allowedLanguages identifiers and empty-list behavior. | Judge0 |
-| PROB-D11 | Define time/memory defaults, min/max, and activity override policy. | Evaluation |
-| PROB-D12 | Define TestCase required fields, count/size limits, and import behavior. | TestCase authoring |
-| PROB-D13 | Define orderIndex convention, uniqueness, and ordering controls. | Evaluation determinism |
-| PROB-D14 | Define isHidden behavior and Student/staff API payload differences. | Confidentiality |
-| PROB-D15 | Define visible/sample TestCase behavior and whether they are evaluated. | UX/evaluation |
-| PROB-D16 | Define Problem reuse across Courses, Labs, Assessments, Contests, and Groups. | Shared content |
-| PROB-D17 | Define whether edits affect linked activities immediately or use snapshots. | Versioning |
-| PROB-D18 | Define historical submission behavior after Problem/TestCase edits. | History |
-| PROB-D19 | Define archive/delete behavior for referenced Problems and TestCases. | Referential integrity |
-| PROB-D20 | Define Problem search/filter/sort/pagination per role/page. | UI |
-| PROB-D21 | Define Practice Problems inclusion rules for public, Department, Section, and assigned Problems. | Student UX |
-| PROB-D22 | Define HOD/Manager access to CodeSubmission history from Problem pages. | Data access |
-| PROB-D23 | Define cross-College/Department Problem sharing. | Tenant model |
-| PROB-D24 | Define Problem publication/assignment notifications (Module 13). | Notifications |
-| PROB-D25 | Define Problem/TestCase audit events and metadata (Module 15). | Audit |
-
----
+All PROB-D01–PROB-D25 are adopted as the v1 target product baseline. The complete rationale and implementation implications are recorded in [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md). No PROB-D01–D25 remains an open product decision. Remaining work is schema migration, cross-module implementation, security verification and QA execution—not product-policy uncertainty.
 
 ## 11. Acceptance checklist
 
-Problem Management is implementation-ready when:
-- [ ] Problem permissions and ownership are explicit.
-- [ ] Problem lifecycle and publication semantics are confirmed.
-- [ ] isPublic and ContentScope visibility rules are approved.
-- [ ] College, Department, and academicBatch rules are defined.
-- [ ] Difficulty and tag behavior is finalized.
-- [ ] allowedLanguages identifiers and empty-list behavior are defined.
-- [ ] Resource-limit defaults and ranges are approved.
-- [ ] TestCase creation, ordering, and hidden/visible behavior are finalized.
-- [ ] Hidden TestCase confidentiality is verified in API and UI.
-- [ ] Problem reuse across academic activities is defined.
-- [ ] Problem/TestCase edits preserve submission history under an approved policy.
-- [ ] Archive/delete behavior is finalized.
-- [ ] HOD, Manager, and Student access is explicitly scoped.
-- [ ] Search/filter/list requirements are approved.
-- [ ] Module 6–7 interfaces for language mapping and evaluation are agreed.
+**Product policy — adopted**
+- [x] Role/action/scope policy, including Finance denial and Manager Section restriction.
+- [x] isPublic Practice discovery semantics; no anonymous/cross-College access.
+- [x] Problem ContentScope semantics and Section audience relationship.
+- [x] Problem DRAFT/PUBLISHED/ARCHIVED lifecycle.
+- [x] Required authoring fields, Markdown safety, title/tag/batch rules.
+- [x] Language identifiers, empty-list behavior and resource-limit policy.
+- [x] TestCase create/edit/remove/order/visibility/evaluation contract.
+- [x] Reuse across Courses/Labs/Assessments/Contests under dual authorization.
+- [x] Immutable ProblemVersion snapshots and historical submission behavior.
+- [x] Archive/no-hard-delete and history retention.
+- [x] Search, Practice discovery, submission visibility, notifications and audit.
 
----
+**Engineering/release — pending**
+- [ ] Add Problem.status/publishedAt/current version and ProblemSection relation.
+- [ ] Implement ProblemVersion snapshot persistence and CodeSubmission version reference.
+- [ ] Update canonical RBAC and API/page matrices.
+- [ ] Align language catalogue/resource caps with Module 6 and Module 7.
+- [ ] Implement atomic TestCase bulk operations, stable order and hidden-field response DTOs.
+- [ ] Integrate activity-version binding in Modules 4/8/9/10/11.
+- [ ] Integrate Module 13 notification events and Module 15 audit.
+- [ ] Execute 200 QA cases, security review and release sign-off.
 
 ## 12. Dependencies and interfaces
 
@@ -625,13 +601,13 @@ Original Drive PDFs:
 - [Page - DB Mapping v2.pdf](https://drive.google.com/file/d/1UdzowkDPP85PNI0-GQ2k4cEmwIIAZYcw/view)
 - [scheema.pdf](https://drive.google.com/file/d/10_LGfTsQ2eGmbJM5tQE9Pkmlwhft1lAI/view)
 
-**Review gate:** Module 5 only. Do not begin Module 6 until the user reviews this document and explicitly approves proceeding.
+**Source review:** original/v2 sources and legacy Module 05 docs reviewed. Adopted target decisions are normative in Section 25. Engineering implementation remains pending.
 
 ---
 
 # Functional Specification Standard v1.0 compliance expansion
 
-> This expansion supplements source-grounded PROB-001–PROB-020 above. Those IDs are source requirement anchors. The stable function IDs below use PROB-Fxxx. Existing PROB-D01–D25 remain open unless the product owner explicitly resolves them.
+> This expansion supplements source-grounded PROB-001–PROB-020 above. Those IDs are source requirement anchors. The stable function IDs below use PROB-Fxxx. Existing PROB-D01–PROB-D25 are adopted; see ADOPTED-DECISIONS.md.
 
 ## 14. Evidence and status labels
 
@@ -639,10 +615,10 @@ Original Drive PDFs:
 - **Derived:** logical safeguard from confirmed facts, such as server-side authorization and preventing hidden TestCase exposure.
 - **TBD / Decision Required:** absent, conflicting, or requiring approval.
 - **Recommendation:** suggestion only; not approved.
-- **Legacy-verified:** none; no legacy implementation was inspected.
-- **Target requirement:** none approved yet; this document is a review draft.
+- **Legacy documentation reviewed:** legacy Module 05 README/SPECIFICATION were reviewed as historical evidence only; this is not a claim that source code was re-executed or re-verified.
+- **Adopted target behavior:** PROB-D01–PROB-D25; runtime implementation remains pending.
 
-No UI behavior beyond source-mapped page names is treated as confirmed. No implementation/API behavior is claimed to have been verified.
+No implementation/API behavior is claimed to have been verified. Adopted product policy is recorded in Section 25; implementation evidence remains pending.
 
 ## 15. Terminology
 
@@ -652,59 +628,60 @@ No UI behavior beyond source-mapped page names is treated as confirmed. No imple
 | TestCase | Input/expected-output record belonging to a Problem. | Schema |
 | Visible TestCase | TestCase with isHidden=false. Whether it is a sample or evaluated is TBD. | Schema flag |
 | Hidden TestCase | TestCase with isHidden=true. Student payload confidentiality is a derived safeguard. | Schema flag |
-| Problem scope | ContentScope enum DEPT_WIDE, SECTION_ONLY, GLOBAL. | Enum confirmed; semantics TBD |
+| Problem scope | ContentScope enum DEPT_WIDE, SECTION_ONLY, GLOBAL. | Enum confirmed; adopted semantics in Section 25 |
 | Public flag | Problem.isPublic boolean. Does not imply anonymous internet publication. | Schema; semantics TBD |
 | Activity reference | CourseProblem, LabAssignment, AssessmentProblem, ContestProblem, or GroupCourseProblem relationship. | Schema/page mapping |
 | Submission | CodeSubmission referencing a Problem and Student. Module 6 owns submission lifecycle; Module 7 owns evaluation. | Schema/module ownership |
 
 ## 16. Role, action, and scope matrix
 
-This matrix records source grants and conflicts without reconciling them silently.
+This is the adopted v1 authorization baseline. Backend authorization is authoritative; page visibility is not a security boundary.
 
-| Role | View Problem | Create | Update metadata/TestCases | Delete | Publish/archive | Solve/submit | Scope |
+| Role | View Problem | Create | Update metadata/TestCases | Publish/unpublish | Archive/restore | Delete | Solve/submit |
 |---|---|---|---|---|---|---|---|
-| SUPER_ADMIN | Full CRUD source grant | Allow | Allow | Full CRUD per RBAC | Lifecycle still decision-gated | N/A | Platform/global |
-| FINANCE_TEAM | Platform matrix says View; page/API matrices omit Problem | Not granted | Not granted | Not granted | Not granted | N/A | College; no Problem page mapped |
-| HOD | Full CRUD | Allow | Allow | Full CRUD per RBAC | Decision-gated | N/A | College + Department |
-| MANAGER | Platform Create/Update*; page/API V/C/U* | Conditional grant | Conditional grant | Not explicitly granted | Not explicitly granted | N/A | College + Department + assigned Section/permitted Group |
-| STUDENT | View/Solve | Deny | Deny | Deny | Deny | Solve; submission creation belongs to Module 6 | Own + permitted academic resources |
+| SUPER_ADMIN | All Colleges | Full | Full | Full | Full | No hard delete; archive only | N/A |
+| FINANCE_TEAM | No Problem page/API access in v1 | No | No | No | No | No | N/A |
+| HOD | Assigned College + Department | Full in Department | Full in Department | Full in Department | Full in Department | No hard delete; archive only | N/A |
+| MANAGER | Assigned Section/activity scope | SECTION_ONLY own Section | Own Section Problems/TestCases | No | No | No | N/A |
+| STUDENT | Own authorized Practice/activity Problems | No | No | No | No | No | Solve; submission intake belongs to Module 6 |
 
-**Conflict notes**
-- RBAC platform matrix gives Manager Create/Update* on Problems & Test Cases; page/API matrices give V/C/U*. Delete is not explicitly granted.
-- RBAC platform matrix gives Finance Team View; page/API matrices omit Problem access and no Finance Problem page is mapped. PROB-D01 must resolve this.
-- HOD/SUPER_ADMIN Full CRUD is source-confirmed, but Problem lifecycle actions remain gated by the missing lifecycle decision.
-- Student View/Solve does not permit hidden TestCase contents or other Students' submissions.
-- Page visibility is not backend authorization.
+- HOD may create/manage SECTION_ONLY and DEPT_WIDE Problems only within assigned College + Department. HOD cannot widen to GLOBAL.
+- SUPER_ADMIN alone may create/change GLOBAL. GLOBAL means all eligible active Sections in the owning College, never cross-College or anonymous.
+- Manager Create/Update* is restricted to SECTION_ONLY Problems within the assigned Section. Manager may manage TestCases only for those Problems. Manager cannot publish, archive, restore, delete, or reparent.
+- Finance platform-level View conflicts with page/API matrices, which omit Problem access. Least-privilege Page/API policy is adopted: no Problem page/API access.
+- Student View/Solve does not expose hidden TestCase values or another Student's submissions.
+- HOD/Manager submission history is separately scoped: HOD assigned Department; Manager assigned Section. Source code/raw output visibility remains Module 6 policy.
+- Every list/search/direct ID/export/API/activity route applies College, Department, Section, status, audience, ownership and context checks server-side.
 
 ## 17. Functional inventory
 
-| Function ID | Function | Actor | Entry point | Type | Status |
+| Function ID | Function | Actor | Entry point | Type | Adopted status |
 |---|---|---|---|---|---|
-| PROB-F001 | List/view Problem records | HOD/Manager/SUPER_ADMIN; Finance disputed | Problems page | Read | Draft |
-| PROB-F002 | Create Problem | HOD/SUPER_ADMIN; Manager conditional | Problems/Create | Create | Draft |
-| PROB-F003 | Update Problem metadata | HOD/SUPER_ADMIN; Manager conditional | Problem edit | Update | Draft |
-| PROB-F004 | Set College/Department/batch | Authorized editor | Problem form | Configuration | TBD |
-| PROB-F005 | Set scope/public visibility | Authorized editor | Problem form | Access config | TBD |
-| PROB-F006 | Publish/unpublish/lifecycle | Staff | Problem action | Workflow | TBD |
-| PROB-F007 | Archive/delete/restore Problem | Staff | Problem action | Lifecycle | TBD |
-| PROB-F008 | Edit statement/content | Staff | Problem editor | Update | Draft |
-| PROB-F009 | Manage difficulty/tags | Staff | Problem editor/list | Update | Draft |
-| PROB-F010 | Configure languages/resource limits | Staff | Problem editor | Update | TBD |
-| PROB-F011 | Create TestCase | Staff | Problem/TestCases | Create | Draft |
-| PROB-F012 | Update TestCase | Staff | TestCase editor | Update | Draft |
-| PROB-F013 | Delete TestCase | Staff | TestCase action | Delete | TBD |
-| PROB-F014 | Reorder TestCases | Staff | TestCase list | Ordering | TBD |
-| PROB-F015 | Set hidden/visible flag | Staff | TestCase editor | Classification | TBD |
-| PROB-F016 | Student Practice Problem discovery | Student | Practice Problems | Read/search | TBD |
-| PROB-F017 | Access Problem through Course | Student/staff | My Courses/Course | Read/integration | Draft |
-| PROB-F018 | Access Problem through Lab | Student/staff | Lab | Read/integration | Draft |
-| PROB-F019 | Access Problem through Assessment | Student/staff | Assessment | Read/integration | Draft |
-| PROB-F020 | Access Problem through Contest | Student/staff | Contest | Read/integration | Draft |
-| PROB-F021 | Search/filter/sort/paginate | Staff/Student | Problem list | Query | TBD |
-| PROB-F022 | View Problem-linked submissions | Staff/Student own | Problem detail | Read/integration | TBD |
-| PROB-F023 | Preserve history after Problem/TestCase edits | System | Content mutation | Integrity | TBD |
-| PROB-F024 | Audit/notification integration | System | Mutation/lifecycle | Integration | Module 13/15 owned |
-| PROB-F025 | Enforce visibility across tenant/activity scopes | Backend | Every request | Authorization | Derived |
+| PROB-F001 | List/view Problem records | Authorized roles | Problems/Practice/activity | Read | Adopted |
+| PROB-F002 | Create Problem | SUPER_ADMIN/HOD; Manager scoped | Problems/Create | Create | Adopted |
+| PROB-F003 | Update Problem metadata | SUPER_ADMIN/HOD; Manager scoped | Problem edit | Update | Versioned after publish |
+| PROB-F004 | Set College/Department/batch | Authorized editor | Problem form | Configuration | Adopted |
+| PROB-F005 | Set scope/public visibility | SUPER_ADMIN/HOD; Manager Section-limited | Problem access | Configuration | Adopted |
+| PROB-F006 | Publish/unpublish/lifecycle | SUPER_ADMIN/HOD | Problem action | Lifecycle | DRAFT/PUBLISHED/ARCHIVED |
+| PROB-F007 | Archive/restore Problem | SUPER_ADMIN/HOD | Problem action | Lifecycle | No hard delete |
+| PROB-F008 | Edit statement/content | Authorized editor | Problem editor | Update | Published changes create version |
+| PROB-F009 | Manage difficulty/tags | Authorized editor | Problem editor/list | Update | Adopted |
+| PROB-F010 | Configure languages/resource limits | Authorized editor | Problem editor | Configuration | Module 6/7 aligned |
+| PROB-F011 | Create TestCase | Authorized editor | Problem/TestCases | Create | Draft revision only |
+| PROB-F012 | Update TestCase | Authorized editor | TestCase editor | Update | Draft revision only |
+| PROB-F013 | Remove TestCase | HOD/SUPER_ADMIN; Manager scoped | TestCase action | Delete | Draft revision only |
+| PROB-F014 | Reorder TestCases | Authorized editor | TestCase list | Ordering | Zero-based deterministic order |
+| PROB-F015 | Set hidden/visible classification | Authorized editor | TestCase editor | Classification | Hidden payload protected |
+| PROB-F016 | Student Practice Problems discovery | Student | Practice Problems | Read/search | isPublic + published + scope |
+| PROB-F017 | Access Problem through Course | Eligible Student/staff | My Courses/Course | Integration | Dual authorization |
+| PROB-F018 | Access Problem through Lab | Eligible participant/staff | Lab | Integration | Dual authorization |
+| PROB-F019 | Access Problem through Assessment | Eligible attempt/staff | Assessment | Integration | Dual authorization |
+| PROB-F020 | Access Problem through Contest | Eligible participant/staff | Contest | Integration | Dual authorization |
+| PROB-F021 | Search/filter/sort/paginate | Authorized staff/Student | Problem list | Query | Scope-first |
+| PROB-F022 | View Problem-linked submissions | HOD/Manager/SUPER_ADMIN; Student own | Problem history | Read/integration | Module 6 field permissions |
+| PROB-F023 | Preserve historical submission/evaluation meaning | System | Publish/edit/submit | Integrity | Immutable version snapshot |
+| PROB-F024 | Audit and notification integration | System | Mutations/lifecycle | Integration | Module 13/15 contracts |
+| PROB-F025 | Enforce visibility across tenant/activity boundaries | Backend | Every request | Authorization | Adopted security policy |
 
 ## 18. Detailed function specifications
 
@@ -762,37 +739,26 @@ The common input fields, source constraints, role scope, and validation IDs are 
 **QA:** PROB-QA-029–034. **Decisions:** D04, D05, D09, D23.
 
 ### PROB-F005 — Set scope and public visibility
-**Status:** enum/boolean source-confirmed, semantics TBD. **Actors:** authorized editor. **Inputs:** ContentScope and isPublic. **Entry:** Problem access configuration.  
-**UI:** scope choices and explanatory labels TBD; do not label public as “internet-wide” without approval.  
-**Flow:** choose values → check role → validate enum/boolean → save → apply approved visibility matrix.  
-**Rules:** public and scope are distinct; GLOBAL may not mean cross-College; isPublic does not bypass tenant/ownership; changing visibility must not silently widen access.  
-**Validation:** invalid enum/unauthorized scope change rejects; combinations follow D03–D05/D23.  
-**Data:** update scope/isPublic only; cache/index side effects TBD.  
-**Failure/edge:** public+SECTION_ONLY, null organization, linked Course/Lab/Assessment/Contest, active submissions.  
-**Audit/privacy:** security-sensitive change; Module 15.  
-**Acceptance:** one approved access matrix governs list/detail/direct URL/activity.  
-**QA:** PROB-QA-035–043. **Decisions:** D03–D05, D17, D23, D25.
+**Actors:** SUPER_ADMIN/HOD; Manager may create/update SECTION_ONLY only within assigned Section.
+**ContentScope:** SECTION_ONLY requires explicit ProblemSection links; DEPT_WIDE includes active Sections in owning Department; GLOBAL includes active Sections across Departments in owning College and is SUPER_ADMIN-only.
+**isPublic:** true means authenticated Student discovery in Practice Problems, only while PUBLISHED and only within the Problem's College/Department/Section/academicBatch scope. It never grants anonymous access, cross-College access or bypasses activity permissions. False excludes the Problem from Practice discovery but does not prevent an authorized activity link from exposing it to eligible participants.
+**Flow:** authorize scope change → validate hierarchy/Section links → preview access impact → save draft/new published version → invalidate relevant cache/index → audit.
+**QA:** PROB-QA-035–043, 171–174, 199–200. **Decisions:** PROB-D03–D05, D21, D23, D25.
 
 ### PROB-F006 — Publish/unpublish/lifecycle transition
-**Status:** blocked; Problem has no status field in reconstructed schema. **Actors:** HOD/SUPER_ADMIN; Manager TBD.  
-**Entry/input:** status action and target state only if approved.  
-**UI/flow:** no publish action may be finalized until D02 defines status field, state transitions, and publish requirements. A possible sequence (authorize → validate content → transition → audit) is illustrative, not approved.  
-**Rules:** generic PublishStatus enum for other entities does not prove Problem uses it; isPublic is not a lifecycle status. Module 17 owns canonical transition.  
-**Data:** no status mutation until schema/state decision.  
-**Failure/edge:** incomplete content, unpublish while assigned, archived Problem used in active activity, Manager publish.  
-**Acceptance:** decision-blocked; no lifecycle implementation before D02.  
-**QA:** PROB-QA-044–049 blocked. **Decision:** D02.
+**Actors:** SUPER_ADMIN/HOD within scope. Manager and Student cannot publish/unpublish.
+**Schema delta:** add Problem.status using shared PublishStatus values DRAFT/PUBLISHED/ARCHIVED; new Problems default DRAFT.
+**Publish gate:** valid title/statement/difficulty/College/Department/scope; non-empty allowedLanguages; at least one valid TestCase; valid SECTION_ONLY audience association; valid resource limits. Publish creates immutable ProblemVersion + TestCase snapshot, sets PUBLISHED and queues Module 13 events.
+**Unpublish:** PUBLISHED→DRAFT; keeps current and prior versions/history; removes new Student access while DRAFT. Republish creates a new immutable version.
+**Failure:** invalid checklist or stale update rejects without partial state mutation. Module 17 owns canonical transition implementation.
+**QA:** PROB-QA-044–049, 171–174, 195–198. **Decisions:** PROB-D02, D06, D10–D14, D17, D24–D25.
 
-### PROB-F007 — Archive/delete/restore Problem
-**Status:** SUPER_ADMIN/HOD Full CRUD source grant; Manager delete not granted; schema has no Problem archive/deleted field.  
-**Actors:** HOD/SUPER_ADMIN. **Entry:** Problem actions, UI details TBD. **Input:** Problem ID/action/confirmation TBD.  
-**Flow:** authorize → inspect Course/Lab/Assessment/Contest/Group/CodeSubmission references → apply approved retention policy → return outcome.  
-**Rules:** no cascade deletion or soft-delete field is assumed; Manager cannot delete without explicit grant.  
-**Data:** blocked pending D19; no delete of linked entities by assumption.  
-**Failure/edge:** linked submissions, active activities, repeated deletion, restore, foreign scope.  
-**Audit:** destructive event Module 15.  
-**Acceptance:** no hard delete/cascade until policy approved.  
-**QA:** PROB-QA-050–056 blocked. **Decisions:** D01, D02, D16, D19, D25.
+### PROB-F007 — Archive/restore Problem
+**Actors:** SUPER_ADMIN platform-wide; HOD within assigned Department. Manager/Student cannot archive, restore or delete.
+**Rules:** ARCHIVED is soft retirement. No hard-delete endpoint for Problem or TestCase. Archive prevents new Practice discovery, new activity attachment and new submissions, but retains activity references, versions, TestCases, CodeSubmissions, verdicts and audit history. Existing history remains available under activity/module policies.
+**Restore:** ARCHIVED→DRAFT, not directly to PUBLISHED. A separate publish activates a version.
+**TestCases:** remove/reorder/edit only in a DRAFT revision. Published version snapshots remain immutable.
+**QA:** PROB-QA-050–056, 178, 199. **Decisions:** PROB-D01, D02, D17–D19, D25.
 
 ### PROB-F008 — Edit Problem statement/content
 **Actors:** HOD/SUPER_ADMIN; Manager conditional. **Entry:** Problem editor. **Input:** title and statement text.  
@@ -870,11 +836,10 @@ The common input fields, source constraints, role scope, and validation IDs are 
 **Acceptance:** Student cannot fetch hidden values; staff access follows RBAC. **QA:** PROB-QA-101–108. **Decisions:** D14/D15/D17/D18.
 
 ### PROB-F016 — Student Practice Problems discovery
-**Actor:** Student. **Entry:** mapped Practice Problems page. **Inputs:** authenticated Student; query/filter from F021.  
-**Flow:** derive Student identity → resolve approved public/Department/Section/batch/assigned eligibility → apply scope → return safe Problem list → open selected Problem.  
-**Rules:** page mapping confirms page/entities but not inclusion criteria. Public/scope semantics remain open; hidden TestCase values never included.  
-**Data:** read Problem/approved relations only. **Failure/edge:** empty results, changed batch/Section, archive status, subscription/College status, public-scope conflict.  
-**Acceptance:** only eligible Problems are listed; direct URL/API checks match list. **QA:** PROB-QA-109–116. **Decisions:** D03–D05, D09, D20–D21.
+**Actor:** authenticated Student.
+**Eligibility:** list only Problems that are PUBLISHED, isPublic=true, within owning College and configured ContentScope/ProblemSection/academicBatch, and available to the Student's current active membership. Public false excludes Practice discovery. Activity-assigned Problems with isPublic=false may still be available through their explicit eligible activity route.
+**Security:** no anonymous catalog/detail access. No cross-College exposure. List and direct detail use identical policy; hidden TestCase values are excluded.
+**QA:** PROB-QA-109–116, 171–174, 192–194, 200. **Decisions:** PROB-D03–D05, D09, D20–D21, D23.
 
 ### PROB-F017 — Access Problem through Course
 **Actors:** Student/staff permitted by Module 4. **Entry:** My Courses/Course. **Owner:** Module 4 association, Module 5 Problem access.  
@@ -921,11 +886,10 @@ The common input fields, source constraints, role scope, and validation IDs are 
 **Acceptance:** no submission/source-code/result disclosure outside permission. **QA:** PROB-QA-146–151. **Decisions:** D22/D25; Module 6.
 
 ### PROB-F023 — Preserve historical submission/evaluation meaning
-**Status:** schema has Problem reference but no version/snapshot fields; policy TBD. **Actors:** system/editor/Modules 6–7. **Trigger:** Problem/TestCase edits, ordering, language/limit/visibility change, archive/delete.  
-**Flow (decision-gated):** detect references/history → apply approved snapshot/version/immutable-content policy → retain traceable old results → serve current content under current policy.  
-**Rules:** no automatic rejudge or old verdict reinterpretation; no version/snapshot assumed.  
-**Data:** version fields require schema/architecture approval. **Failure/edge:** edit while Judge0 job runs, contest/assessment active, TestCase reorder changes failed index, delete referenced content.  
-**Acceptance:** historical verdicts remain traceable and are not silently overwritten. **QA:** PROB-QA-152–158. **Decisions:** D17–D19; Modules 6/7/17/18.
+**Policy:** immutable ProblemVersion snapshot for every published revision. The snapshot includes Problem statement, difficulty, tags, language whitelist, time/memory limits, and the ordered complete TestCase set with hidden flags.
+**Submission contract:** Module 6 binds each accepted CodeSubmission to the ProblemVersion used at acceptance. Module 7 evaluates that immutable snapshot, not mutable draft/current pointer. Existing verdicts/results never silently change after edits or publication of a new version. Rejudge is an explicit Module 7 operation against a specified version with audit and downstream score reconciliation; Module 5 does not trigger it automatically.
+**Schema delta:** ProblemVersion and snapshot data; CodeSubmission.problemVersionId or equivalent immutable reference.
+**QA:** PROB-QA-152–158, 175–177, 198–199. **Decisions:** PROB-D17–D19.
 
 ### PROB-F024 — Audit and notification integration
 **Actors:** system; Module 13 notification delivery, Module 15 audit catalog. **Triggers:** create/update/scope/public/lifecycle/TestCase mutation.  
@@ -1114,3 +1078,245 @@ PROB-D01–PROB-D25 from Section 10 remain **Open** unless explicitly approved b
 - [ ] Source facts, derived safeguards, recommendations, and TBDs remain distinct.
 
 **Review gate:** Module 5 only. GitHub inclusion versions this detailed draft; it does not approve target behavior or authorize implementation of unresolved decisions.
+
+
+## 25. Adopted target behavior — normative v1 baseline
+
+This section supersedes earlier source-gap/TBD wording where the two differ. Existing schema fields remain as documented in Section 20; additions are in Section 26.
+
+### 25.1 Roles and ownership
+- SUPER_ADMIN: platform-wide Problem administration; may set GLOBAL within the owning College boundary.
+- HOD: full Problem authoring/maintenance within assigned College + Department; may create SECTION_ONLY and DEPT_WIDE, not GLOBAL.
+- MANAGER: view/create/update Problems and TestCases only for SECTION_ONLY within assigned Section. No publish, archive, restore, delete or reparent.
+- STUDENT: view/solve Problems after Practice/activity access checks; own submission data only.
+- FINANCE_TEAM: no Problem page/API access in v1 because Page/API matrices omit it despite platform-level View.
+- Creator attribution and tenant/Section identity are server-derived; never trust client-supplied ownership fields.
+
+### 25.2 Required fields and statement format
+- title is required, trimmed, non-empty, 3–255 characters. Duplicate titles are allowed; no title uniqueness or slug is introduced.
+- statement is required non-empty Markdown text. Render through an allowlisted/sanitized Markdown renderer; strip/reject executable HTML, scripts, event handlers, unsafe links and active content. No separate inputFormat/outputFormat/constraints/editorial/hint/solution columns are assumed in v1.
+- difficulty is required and must be EASY, MEDIUM or HARD.
+- tags are free-form strings, trimmed, normalized to lowercase and de-duplicated case-insensitively within the Problem; empty tags are rejected. No global tag catalogue is required in v1.
+- academicBatch is optional single text identifier. If present, Student batch must match; null means no batch restriction within other access scope. Multi-batch targeting needs a future relation.
+- College and owning Department are required; Department must belong to College. createdById and timestamps are server-controlled.
+
+### 25.3 ContentScope, ProblemSection and isPublic
+| ContentScope | Meaning | Eligible audience |
+|---|---|---|
+| SECTION_ONLY | Explicit Section audience | Active Students in linked ProblemSection rows only |
+| DEPT_WIDE | Department-wide | Active Sections in owning Department |
+| GLOBAL | College-wide across Departments | Active Sections in owning College; SUPER_ADMIN may set/change |
+
+GLOBAL is never platform-public, anonymous or cross-College. SECTION_ONLY requires at least one valid ProblemSection link before publication. DEPT_WIDE/GLOBAL audience derives from the active Section hierarchy. Scope changes require HOD within Department or SUPER_ADMIN, impact preview and audit; HOD cannot widen to GLOBAL.
+
+isPublic=true means **authenticated Student discovery in Practice Problems**, and only for PUBLISHED Problems whose College, ContentScope, ProblemSection (where relevant), academicBatch and membership rules match the Student. It does not grant anonymous internet access, cross-College sharing or an override of ContentScope. isPublic=false excludes the Problem from Practice discovery but an explicit Course/Lab/Assessment/Contest link may expose it to a participant who independently satisfies activity and Problem access. All routes use the same authorization policy.
+
+### 25.4 Lifecycle and visibility
+Problem uses DRAFT/PUBLISHED/ARCHIVED lifecycle (shared PublishStatus values). New Problems default to DRAFT.
+
+| Status | Staff | Student | Rules |
+|---|---|---|---|
+| DRAFT | Authorized editors | Hidden | Editable; no Student access/submission |
+| PUBLISHED | Authorized scoped staff | In-scope Practice or explicitly assigned activity participants | Immutable published version; eligible submissions allowed |
+| ARCHIVED | Authorized staff | Existing history only | No discovery, new assignments or submissions |
+
+Allowed transitions: create→DRAFT; DRAFT→PUBLISHED; PUBLISHED→DRAFT (unpublish); DRAFT/PUBLISHED→ARCHIVED; ARCHIVED→DRAFT (restore). Only SUPER_ADMIN/HOD within scope. Restore does not auto-publish. Publish requires complete metadata, at least one valid TestCase, at least one allowed language, valid resource limits and valid SECTION_ONLY links. Archive is soft retirement; no hard delete. Existing history remains available under owning-module access policy.
+
+### 25.5 Language and resource-limit contract
+- allowedLanguages contains one or more stable canonical DEZOLVER language keys; Judge0 IDs/versions are mapped server-side by Module 6.
+- Empty allowedLanguages does not mean unrestricted. DRAFT may be incomplete; publication requires at least one supported key.
+- Activity modules may narrow the allowed language set but cannot expand beyond Problem.allowedLanguages.
+- Suggested defaults: timeLimitMs = 2000 and memoryLimitMb = 256. Adopt configurable validation bounds of 100–60,000 ms and 8–512 MB, subject to stricter deployed Judge0/worker ceilings. Legacy values are reference only, not proof of target defaults.
+- Limits are captured in each published ProblemVersion. Edits do not rewrite queued or historical submissions.
+
+### 25.6 TestCase authoring, ordering and visibility
+- input and expectedOutput are required text values; empty string is valid for intentional empty-input/empty-output cases.
+- isHidden=false is the visible/sample classification. isHidden=true is hidden evaluation material. Student payloads include visible sample input/output only; omit hidden inputs, expected outputs, identifiers, exact count and order metadata. Full hidden values are available only to authorized authoring staff and server-side evaluation.
+- Both visible and hidden cases are included in formal evaluation. Module 7 owns verdict aggregation, scoring, comparison and any score weights. Target TestCase has no weight field; no legacy weight is imported.
+- orderIndex is zero-based, non-negative, unique and contiguous within a ProblemVersion (0..N-1). Reorders are atomic. Stable TestCase IDs plus ProblemVersion are canonical; failed-case index is derived from pinned version order.
+- TestCase create/edit/remove/reorder and bulk import operate only on DRAFT revisions. Bulk import is transactional; partial success is not silently reported as complete. A Problem requires at least one TestCase to publish.
+- Hidden-test content must not appear in Student API payloads, browser state, logs, errors, analytics or notification content. Student responses do not expose exact hidden TestCase count.
+
+### 25.7 Reuse and activity access
+Problem IDs may be reused in same-College Courses, Labs, Assessments and Contests when each owning module authorizes the relationship and Problem audience permits it. No default cross-College sharing. Activity assignment does not change isPublic or ContentScope. Activity routes require both activity eligibility and Problem status/scope checks. GroupCourseProblem remains Module 10-owned; group-only association is not a CourseProblem.
+
+### 25.8 Versioning and historical result integrity
+- Every publish produces immutable ProblemVersion containing Problem statement/metadata/evaluation configuration and the complete ordered TestCase set, including hidden flags.
+- CodeSubmission is bound to the exact ProblemVersion at submission time. Module 7 evaluates that pinned version even when a new draft/current pointer exists.
+- Published version content is never edited in place. Change requires a new draft revision and publish transition. Active Course/Lab/Assessment/Contest references keep the version they selected; they change only through an explicit action by the owning module.
+- Old verdicts/scores are not recalculated automatically. Rejudge is a separate Module 7 operation, bound to an explicit version and audited. No implicit rejudge on Problem/TestCase edits.
+- Draft TestCases may be removed/reordered; published version snapshots remain preserved.
+
+### 25.9 Search and submission visibility
+- Search is scope-first. Staff may search title/statement and filter difficulty, tags, language, status, College/Department/Section, academicBatch and isPublic.
+- Students search only PUBLISHED Practice-eligible Problems or Problems in a currently authorized activity. Never expose hidden test data.
+- Default sort createdAt descending then stable Problem ID; page size 20 default, 100 max. Invalid filters/sort/page values are rejected.
+- Student sees own submissions only. HOD sees authorized Department records; Manager sees assigned Section; SUPER_ADMIN platform-wide. FINANCE_TEAM has no Problem submission access. Source code, raw stdout/stderr, compiler diagnostics and raw Judge0 artifacts remain Module 6 field-level permissions.
+
+### 25.10 Notifications and audit
+- Module 13 owns notification delivery. Emit events on publish/new version, unpublish/archive/restore and availability changes; Module 13 defines recipient resolution, channel, content and retry.
+- Module 15 owns audit. Record actor/service, action, Problem/TestCase/version IDs, College/Department/Section scope, changed field names, event/idempotency key, timestamp and reason where relevant.
+- Do not copy hidden input/output, source code, full statement or sensitive Student data into routine audit or notification payloads.
+
+## 26. Target schema delta — proposed implementation changes
+
+These fields/relations are not present in the reconstructed schema as fetched. They require migration/review; the specification does not claim they already exist.
+
+### 26.1 Problem
+- Add Problem.status using shared PublishStatus, NOT NULL DEFAULT DRAFT.
+- Add publishedAt timestamp and currentPublishedVersionId reference.
+- Keep College and owning Department required, including GLOBAL records.
+- Keep existing isPublic, scope, content and resource fields.
+
+### 26.2 ProblemSection
+Add ProblemSection(problemId, sectionId, createdAt), with unique(problemId, sectionId). Required for SECTION_ONLY audiences; validate Section belongs to owning College and Department. Global/Department-wide scope is derived from hierarchy and need not materialize one link per Section in v1.
+
+### 26.3 ProblemVersion
+Add immutable version entity or equivalent immutable snapshot:
+- id, problemId, versionNumber, publishedAt, title, statement, difficulty, tags, academicBatch, scope, isPublic, allowedLanguages, timeLimitMs, memoryLimitMb, createdAt, createdById.
+- Version-owned TestCase snapshot rows with stable testCaseId, input, expectedOutput, isHidden, orderIndex.
+- Unique(problemId, versionNumber); unique(problemVersionId, orderIndex); immutable after publish.
+- Problem.currentPublishedVersionId points to latest published version; older versions remain addressable by existing submissions/activity bindings.
+
+### 26.4 CodeSubmission and activity binding
+- Add CodeSubmission.problemVersionId or equivalent FK to immutable ProblemVersion.
+- Modules 4/8/9/10/11 bind their activity Problem relation to selected published ProblemVersion. Latest pointer must not mutate active attempt content.
+- Module 7 consumes immutable snapshot and correlates results by TestCase ID/version.
+
+### 26.5 Language and limit configuration
+A platform language catalogue/identifier map is required in Module 6. Deployment-specific maximum time/memory ceilings are configuration, not free-form client values. Activity modules may narrow but not expand Problem configuration.
+
+## 27. Engineering implementation gates (not product decisions)
+1. Add Problem.status/publishedAt/currentPublishedVersionId and migrate existing records to a safe initial status; review per-row, do not assume all existing Problems are published.
+2. Add ProblemSection and scope resolver for SECTION_ONLY, DEPT_WIDE and College-bounded GLOBAL; integrate Module 2 active Section/membership authority.
+3. Add immutable ProblemVersion/TestCase snapshot persistence and CodeSubmission version reference; settle version FK placement in activity association models.
+4. Update canonical RBAC/page/API matrices for Finance denial, Manager SECTION_ONLY Create/Update only, HOD Department scope and SUPER_ADMIN GLOBAL authority.
+5. Align canonical language keys/Judge0 mapping with Module 6; confirm deployment ceilings and TestCase size/count limits.
+6. Implement safe Markdown rendering and Student response allowlists; verify hidden fields cannot leak through direct ID/search/errors/logs/client state.
+7. Integrate Module 7 evaluation against pinned versions/stable TestCase IDs/order; no automatic rejudge.
+8. Integrate activity version selection with Modules 4/8/9/10/11; preserve history on archive and relationship removal.
+9. Integrate Module 13 notifications, Module 15 audit, Module 17 transitions and Module 18 concurrency/retry.
+10. Execute 200 QA cases, security review, migration backfill validation and release sign-off.
+
+**Legacy boundary:** legacy Module 05 documentation describes a platform-wide catalog, separate content schema, slug/Markdown-specific columns, isSample and weight TestCase fields, old resource defaults/ranges, publish requiring a TestCase, and no update/delete endpoints. These are historical observations only. The target schema uses College/Department ownership, isPublic, ContentScope, isHidden and orderIndex; no legacy field/API contract is silently imported.
+
+
+## 25. Adopted target behavior — normative v1 baseline
+
+This section supersedes earlier source-gap/TBD wording where the two differ. Existing schema fields remain as documented in Section 20; additions are in Section 26.
+
+### 25.1 Roles and ownership
+- SUPER_ADMIN: platform-wide Problem administration; may set GLOBAL within the owning College boundary.
+- HOD: full Problem authoring/maintenance within assigned College + Department; may create SECTION_ONLY and DEPT_WIDE, not GLOBAL.
+- MANAGER: view/create/update Problems and TestCases only for SECTION_ONLY within assigned Section. No publish, archive, restore, delete or reparent.
+- STUDENT: view/solve Problems after Practice/activity access checks; own submission data only.
+- FINANCE_TEAM: no Problem page/API access in v1 because Page/API matrices omit it despite platform-level View.
+- Creator attribution and tenant/Section identity are server-derived; never trust client-supplied ownership fields.
+
+### 25.2 Required fields and statement format
+- title is required, trimmed, non-empty, 3–255 characters. Duplicate titles are allowed; no title uniqueness or slug is introduced.
+- statement is required non-empty Markdown text. Render through an allowlisted/sanitized Markdown renderer; strip/reject executable HTML, scripts, event handlers, unsafe links and active content. No separate inputFormat/outputFormat/constraints/editorial/hint/solution columns are assumed in v1.
+- difficulty is required and must be EASY, MEDIUM or HARD.
+- tags are free-form strings, trimmed, normalized to lowercase and de-duplicated case-insensitively within the Problem; empty tags are rejected. No global tag catalogue is required in v1.
+- academicBatch is optional single text identifier. If present, Student batch must match; null means no batch restriction within other access scope. Multi-batch targeting needs a future relation.
+- College and owning Department are required; Department must belong to College. createdById and timestamps are server-controlled.
+
+### 25.3 ContentScope, ProblemSection and isPublic
+| ContentScope | Meaning | Eligible audience |
+|---|---|---|
+| SECTION_ONLY | Explicit Section audience | Active Students in linked ProblemSection rows only |
+| DEPT_WIDE | Department-wide | Active Sections in owning Department |
+| GLOBAL | College-wide across Departments | Active Sections in owning College; SUPER_ADMIN may set/change |
+
+GLOBAL is never platform-public, anonymous or cross-College. SECTION_ONLY requires at least one valid ProblemSection link before publication. DEPT_WIDE/GLOBAL audience derives from the active Section hierarchy. Scope changes require HOD within Department or SUPER_ADMIN, impact preview and audit; HOD cannot widen to GLOBAL.
+
+isPublic=true means **authenticated Student discovery in Practice Problems**, and only for PUBLISHED Problems whose College, ContentScope, ProblemSection (where relevant), academicBatch and membership rules match the Student. It does not grant anonymous internet access, cross-College sharing or an override of ContentScope. isPublic=false excludes the Problem from Practice discovery but an explicit Course/Lab/Assessment/Contest link may expose it to a participant who independently satisfies activity and Problem access. All routes use the same authorization policy.
+
+### 25.4 Lifecycle and visibility
+Problem uses DRAFT/PUBLISHED/ARCHIVED lifecycle (shared PublishStatus values). New Problems default to DRAFT.
+
+| Status | Staff | Student | Rules |
+|---|---|---|---|
+| DRAFT | Authorized editors | Hidden | Editable; no Student access/submission |
+| PUBLISHED | Authorized scoped staff | In-scope Practice or explicitly assigned activity participants | Immutable published version; eligible submissions allowed |
+| ARCHIVED | Authorized staff | Existing history only | No discovery, new assignments or submissions |
+
+Allowed transitions: create→DRAFT; DRAFT→PUBLISHED; PUBLISHED→DRAFT (unpublish); DRAFT/PUBLISHED→ARCHIVED; ARCHIVED→DRAFT (restore). Only SUPER_ADMIN/HOD within scope. Restore does not auto-publish. Publish requires complete metadata, at least one valid TestCase, at least one allowed language, valid resource limits and valid SECTION_ONLY links. Archive is soft retirement; no hard delete. Existing history remains available under owning-module access policy.
+
+### 25.5 Language and resource-limit contract
+- allowedLanguages contains one or more stable canonical DEZOLVER language keys; Judge0 IDs/versions are mapped server-side by Module 6.
+- Empty allowedLanguages does not mean unrestricted. DRAFT may be incomplete; publication requires at least one supported key.
+- Activity modules may narrow the allowed language set but cannot expand beyond Problem.allowedLanguages.
+- Suggested defaults: timeLimitMs = 2000 and memoryLimitMb = 256. Adopt configurable validation bounds of 100–60,000 ms and 8–512 MB, subject to stricter deployed Judge0/worker ceilings. Legacy values are reference only, not proof of target defaults.
+- Limits are captured in each published ProblemVersion. Edits do not rewrite queued or historical submissions.
+
+### 25.6 TestCase authoring, ordering and visibility
+- input and expectedOutput are required text values; empty string is valid for intentional empty-input/empty-output cases.
+- isHidden=false is the visible/sample classification. isHidden=true is hidden evaluation material. Student payloads include visible sample input/output only; omit hidden inputs, expected outputs, identifiers, exact count and order metadata. Full hidden values are available only to authorized authoring staff and server-side evaluation.
+- Both visible and hidden cases are included in formal evaluation. Module 7 owns verdict aggregation, scoring, comparison and any score weights. Target TestCase has no weight field; no legacy weight is imported.
+- orderIndex is zero-based, non-negative, unique and contiguous within a ProblemVersion (0..N-1). Reorders are atomic. Stable TestCase IDs plus ProblemVersion are canonical; failed-case index is derived from pinned version order.
+- TestCase create/edit/remove/reorder and bulk import operate only on DRAFT revisions. Bulk import is transactional; partial success is not silently reported as complete. A Problem requires at least one TestCase to publish.
+- Hidden-test content must not appear in Student API payloads, browser state, logs, errors, analytics or notification content. Student responses do not expose exact hidden TestCase count.
+
+### 25.7 Reuse and activity access
+Problem IDs may be reused in same-College Courses, Labs, Assessments and Contests when each owning module authorizes the relationship and Problem audience permits it. No default cross-College sharing. Activity assignment does not change isPublic or ContentScope. Activity routes require both activity eligibility and Problem status/scope checks. GroupCourseProblem remains Module 10-owned; group-only association is not a CourseProblem.
+
+### 25.8 Versioning and historical result integrity
+- Every publish produces immutable ProblemVersion containing Problem statement/metadata/evaluation configuration and the complete ordered TestCase set, including hidden flags.
+- CodeSubmission is bound to the exact ProblemVersion at submission time. Module 7 evaluates that pinned version even when a new draft/current pointer exists.
+- Published version content is never edited in place. Change requires a new draft revision and publish transition. Active Course/Lab/Assessment/Contest references keep the version they selected; they change only through an explicit action by the owning module.
+- Old verdicts/scores are not recalculated automatically. Rejudge is a separate Module 7 operation, bound to an explicit version and audited. No implicit rejudge on Problem/TestCase edits.
+- Draft TestCases may be removed/reordered; published version snapshots remain preserved.
+
+### 25.9 Search and submission visibility
+- Search is scope-first. Staff may search title/statement and filter difficulty, tags, language, status, College/Department/Section, academicBatch and isPublic.
+- Students search only PUBLISHED Practice-eligible Problems or Problems in a currently authorized activity. Never expose hidden test data.
+- Default sort createdAt descending then stable Problem ID; page size 20 default, 100 max. Invalid filters/sort/page values are rejected.
+- Student sees own submissions only. HOD sees authorized Department records; Manager sees assigned Section; SUPER_ADMIN platform-wide. FINANCE_TEAM has no Problem submission access. Source code, raw stdout/stderr, compiler diagnostics and raw Judge0 artifacts remain Module 6 field-level permissions.
+
+### 25.10 Notifications and audit
+- Module 13 owns notification delivery. Emit events on publish/new version, unpublish/archive/restore and availability changes; Module 13 defines recipient resolution, channel, content and retry.
+- Module 15 owns audit. Record actor/service, action, Problem/TestCase/version IDs, College/Department/Section scope, changed field names, event/idempotency key, timestamp and reason where relevant.
+- Do not copy hidden input/output, source code, full statement or sensitive Student data into routine audit or notification payloads.
+
+## 26. Target schema delta — proposed implementation changes
+
+These fields/relations are not present in the reconstructed schema as fetched. They require migration/review; this specification does not claim they already exist.
+
+### 26.1 Problem
+- Add Problem.status using shared PublishStatus, NOT NULL DEFAULT DRAFT.
+- Add publishedAt timestamp and currentPublishedVersionId reference.
+- Keep College and owning Department required, including GLOBAL records.
+- Keep existing isPublic, scope, content and resource fields.
+
+### 26.2 ProblemSection
+Add ProblemSection(problemId, sectionId, createdAt), with unique(problemId, sectionId). Required for SECTION_ONLY audiences; validate Section belongs to owning College and Department. GLOBAL/Department-wide scope is derived from hierarchy and need not materialize one link per Section in v1.
+
+### 26.3 ProblemVersion
+Add immutable version entity or equivalent immutable snapshot:
+- id, problemId, versionNumber, publishedAt, title, statement, difficulty, tags, academicBatch, scope, isPublic, allowedLanguages, timeLimitMs, memoryLimitMb, createdAt, createdById.
+- Version-owned TestCase snapshot rows with stable testCaseId, input, expectedOutput, isHidden, orderIndex.
+- Unique(problemId, versionNumber); unique(problemVersionId, orderIndex); immutable after publish.
+- Problem.currentPublishedVersionId points to latest published version; older versions remain addressable by existing submissions/activity bindings.
+
+### 26.4 CodeSubmission and activity binding
+- Add CodeSubmission.problemVersionId or equivalent FK to immutable ProblemVersion.
+- Modules 4/8/9/10/11 bind their activity Problem relation to selected published ProblemVersion. Latest pointer must not mutate active attempt content.
+- Module 7 consumes immutable snapshot and correlates results by TestCase ID/version.
+
+### 26.5 Language and limit configuration
+A platform language catalogue/identifier map is required in Module 6. Deployment-specific maximum time/memory ceilings are configuration, not free-form client values. Activity modules may narrow but not expand Problem configuration.
+
+## 27. Engineering implementation gates (not product decisions)
+1. Add Problem.status/publishedAt/currentPublishedVersionId and migrate existing records to a safe initial status; review per-row, do not assume all existing Problems are published.
+2. Add ProblemSection and scope resolver for SECTION_ONLY, DEPT_WIDE and College-bounded GLOBAL; integrate Module 2 active Section/membership authority.
+3. Add immutable ProblemVersion/TestCase snapshot persistence and CodeSubmission version reference; settle version FK placement in activity association models.
+4. Update canonical RBAC/page/API matrices for Finance denial, Manager SECTION_ONLY Create/Update only, HOD Department scope and SUPER_ADMIN GLOBAL authority.
+5. Align canonical language keys/Judge0 mapping with Module 6; confirm deployment ceilings and TestCase size/count limits.
+6. Implement safe Markdown rendering and Student response allowlists; verify hidden fields cannot leak through direct ID/search/errors/logs/client state.
+7. Integrate Module 7 evaluation against pinned versions/stable TestCase IDs/order; no automatic rejudge.
+8. Integrate activity version selection with Modules 4/8/9/10/11; preserve history on archive and relationship removal.
+9. Integrate Module 13 notifications, Module 15 audit, Module 17 transitions and Module 18 concurrency/retry.
+10. Execute 200 QA cases, security review, migration backfill validation and release sign-off.
+
+**Legacy boundary:** legacy Module 05 documentation describes a platform-wide catalog, separate content schema, slug/Markdown-specific columns, isSample and weight TestCase fields, old resource defaults/ranges, publish requiring a TestCase, and no update/delete endpoints. These are historical observations only. The target schema uses College/Department ownership, isPublic, ContentScope, isHidden and orderIndex; no legacy field/API contract is silently imported.
