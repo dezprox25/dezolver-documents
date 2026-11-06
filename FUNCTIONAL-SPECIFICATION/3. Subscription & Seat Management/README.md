@@ -32,7 +32,7 @@ DEZOLVER uses a **fixed College package** model. A standard Plan has a configure
 
 A plan edit creates a new version for future purchases. Existing Colleges retain the contract and feature/seat snapshot they accepted until renewal, unless SUPER_ADMIN performs a separately confirmed migration. This keeps the commercial model flexible without silently changing a paid agreement.
 
-The adopted decision matrix is recorded in [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md). It supersedes earlier TBD wording about product policy; schema and cross-module contracts remain engineering gates.
+The adopted decision matrix is recorded in [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md). It supersedes earlier Adopted baseline; implementation pending wording about product policy; schema and cross-module contracts remain engineering gates.
 
 ## 2. Scope
 
@@ -601,7 +601,7 @@ The relationship among these counters is not fully defined in the source.
 
 ## 8. Validation and consistency requirements
 
-The following are derived safeguards; detailed business arithmetic remains subject to approval.
+The following rules are adopted target requirements. Technical implementation and cross-module contracts remain pending.
 
 | Rule ID | Validation | Status |
 |---|---|---|
@@ -609,11 +609,11 @@ The following are derived safeguards; detailed business arithmetic remains subje
 | SUB-V02 | Quote currency, invoice currency, and payment currency must be consistent unless an approved conversion process exists. | Derived |
 | SUB-V03 | Payment transaction must be traceable to its intended purchase, subscription, invoice, or quote according to approved transaction type rules. | Derived |
 | SUB-V04 | Finance Team queries must be restricted to its assigned College. | Source-confirmed RBAC |
-| SUB-V05 | Seat usage must not silently exceed capacity; define enforcement and exception handling. | Derived; exact policy TBD |
+| SUB-V05 | Seat usage must not silently exceed capacity; define enforcement and exception handling. | Adopted; implementation pending |
 | SUB-V06 | College/Department seat counters must be reconciled to the approved seat accounting rules. | Derived |
-| SUB-V07 | Quote expiration must be checked before accepting quote-based purchase, if quote expiry is enforced. | Schema supports validUntil; behavior TBD |
-| SUB-V08 | Payment transaction idempotency must prevent duplicate processing of the same logical payment where applicable. | Derived from schema idempotencyKey; implementation details TBD |
-| SUB-V09 | Invoice and Subscription status must be updated consistently after confirmed payment/renewal. | Derived; exact state rules TBD |
+| SUB-V07 | Quote expiration must be checked before accepting quote-based purchase, if quote expiry is enforced. | Adopted; implementation pending |
+| SUB-V08 | Payment transaction idempotency must prevent duplicate processing of the same logical payment where applicable. | Adopted; implementation pending |
+| SUB-V09 | Invoice and Subscription status must be updated consistently after confirmed payment/renewal. | Adopted; implementation pending |
 | SUB-V10 | A Plan with `isActive=false` must have defined availability rules for new purchases and existing subscriptions. | TBD |
 
 ---
@@ -718,7 +718,7 @@ The existing source-based content above remains the source summary and high-leve
 
 ## 15. Function-level specification supplement
 
-The detail below follows the Standard’s required questions: actor, permission/scope, preconditions, entry point, UI behavior, inputs, flow, rules, system/data behavior, success, alternate/failure paths, audit/privacy, acceptance, QA, and unresolved decisions. UI details not in the source are marked TBD.
+The detail below follows the Standard’s required questions. It preserves source-based function structure; where its earlier per-function wording conflicts with the adopted product baseline, Sections 19–22 and ADOPTED-DECISIONS.md are authoritative. UI details not present in the source remain specified as implementation requirements rather than assumed source facts.
 
 ### SUB-F001 — View and manage Plan catalogue
 
@@ -738,7 +738,7 @@ The detail below follows the Standard’s required questions: actor, permission/
 - **Audit/privacy:** plan changes should be coordinated with Module 15; exact event list TBD.
 - **Acceptance:** only authorized role can modify; all accepted fields follow approved constraints; no unapproved retroactive subscription change.
 - **QA:** SUB-QA-001–006.
-- **Decision refs:** SUB-D01/D03/D26.
+- **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
 
 ### SUB-F002 — Configure DEFAULT/CUSTOM plan selection
 
@@ -753,7 +753,7 @@ The detail below follows the Standard’s required questions: actor, permission/
 - **Failure:** inactive plan selection, expired quote, or unauthorized custom selection behavior TBD.
 - **Acceptance:** system only offers/selects categories after semantics are approved; CUSTOM cannot silently bypass pricing/capacity policy.
 - **QA:** SUB-QA-007–010.
-- **Decision refs:** SUB-D02/D03/D06.
+- **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
 
 ### SUB-F003 — View College subscription
 
@@ -770,7 +770,7 @@ The detail below follows the Standard’s required questions: actor, permission/
 - **Failure:** missing subscription, no access, multiple subscription records, stale data behavior TBD.
 - **Acceptance:** Finance Team cannot query another College; list/detail/direct-ID paths all scope-filtered.
 - **QA:** SUB-QA-011–015.
-- **Decision refs:** SUB-D04/D13/D18.
+- **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
 
 ### SUB-F004 — Create subscription
 
@@ -786,7 +786,7 @@ The detail below follows the Standard’s required questions: actor, permission/
 - **Failure:** missing parent, inactive Plan, duplicate active subscription, payment not completed, or retry behavior TBD.
 - **Acceptance:** no invalid College/Plan reference; creation follows approved activation ordering; Finance Team scoped to its College.
 - **QA:** SUB-QA-016–020.
-- **Decision refs:** SUB-D04/D05/D13/D20.
+- **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
 
 ### SUB-F005 — Update subscription
 
@@ -798,7 +798,7 @@ The detail below follows the Standard’s required questions: actor, permission/
 - **Failure:** stale record, invalid date order, unauthorized field mutation, foreign College ID → reject without mutation.
 - **Acceptance:** Finance Team cannot change another College; updates conform to field allowlist and approved state transitions.
 - **QA:** SUB-QA-021–025.
-- **Decision refs:** SUB-D10/D13/D20/D22.
+- **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
 
 ### SUB-F006 — Change subscription status
 
@@ -811,7 +811,7 @@ The detail below follows the Standard’s required questions: actor, permission/
 - **Failure:** invalid transition, wrong scope, missing required reason, stale status → reject/no change.
 - **Acceptance:** only approved transition pairs accepted; downstream access follows Module 17/1/18 rules.
 - **QA:** SUB-QA-026–030.
-- **Decision refs:** SUB-D11/D12/D24/D25.
+- **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
 
 ### SUB-F007 — View active period and renewal dates
 
@@ -823,7 +823,7 @@ The detail below follows the Standard’s required questions: actor, permission/
 - **Failure:** absent date, invalid stored date, timezone discrepancy → behavior TBD.
 - **Acceptance:** displayed values map to stored fields and are tenant-scoped.
 - **QA:** SUB-QA-031–033.
-- **Decision refs:** SUB-D10/D11.
+- **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
 
 ### SUB-F008 — Renew subscription
 
@@ -837,7 +837,7 @@ The detail below follows the Standard’s required questions: actor, permission/
 - **Failure:** payment failure, quote expiry, renewal race, subscription already renewed, gateway unavailable → decision-gated.
 - **Acceptance:** dates/status change only after approved renewal conditions; duplicate renewal does not create duplicate periods/charges.
 - **QA:** SUB-QA-034–039.
-- **Decision refs:** SUB-D05/D09/D10/D15/D24.
+- **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
 
 ### SUB-F009 — Apply grace period
 
@@ -849,7 +849,7 @@ The detail below follows the Standard’s required questions: actor, permission/
 - **Failure:** invalid grace end, repeated grace extension, grace expiry processing → TBD.
 - **Acceptance:** grace state and timestamp follow approved policy; downstream entitlement is not assumed.
 - **QA:** SUB-QA-040–043.
-- **Decision refs:** SUB-D11/D24.
+- **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
 
 ### SUB-F010 — Suspend or cancel subscription
 
@@ -861,7 +861,7 @@ The detail below follows the Standard’s required questions: actor, permission/
 - **Failure:** already suspended/cancelled, unauthorized College, dependent financial action failure → behavior TBD.
 - **Acceptance:** state change is permitted only by approved transition/permission; refund and College status do not change automatically.
 - **QA:** SUB-QA-044–047.
-- **Decision refs:** SUB-D12/D13/D16/D25.
+- **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
 
 ### SUB-F011 — Create/view/update PricingQuote
 
@@ -873,7 +873,7 @@ The detail below follows the Standard’s required questions: actor, permission/
 - **Failure:** invalid Plan/onboarding, expired quote, duplicate/revision race, invalid currency → reject/decision-gated.
 - **Acceptance:** quote links to valid Plan and onboarding record; actor scope enforced; amounts are not invented or recalculated under unapproved formula.
 - **QA:** SUB-QA-048–053.
-- **Decision refs:** SUB-D06/D07/D08.
+- **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
 
 ### SUB-F012 — Calculate quote amounts
 
@@ -885,7 +885,7 @@ The detail below follows the Standard’s required questions: actor, permission/
 - **Failure:** unsupported currency, invalid quantity, missing tax rule, rounding boundary → no quote finalized until policy resolved.
 - **Acceptance:** same inputs/policy produce consistent values; line/breakdown reconciliation follows approved formula.
 - **QA:** SUB-QA-054–057.
-- **Decision refs:** SUB-D01/D08.
+- **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
 
 ### SUB-F013 — Buy More Seats
 
@@ -897,7 +897,7 @@ The detail below follows the Standard’s required questions: actor, permission/
 - **Failure:** no active subscription, seat max reached, payment fails, duplicate click, concurrent purchase → decision-gated.
 - **Acceptance:** capacity is increased only on approved confirmation; Finance Team cannot purchase/update another College's seats.
 - **QA:** SUB-QA-058–064.
-- **Decision refs:** SUB-D20/D22/D23.
+- **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
 
 ### SUB-F014 — View and reconcile College/Department seats
 
@@ -908,7 +908,7 @@ The detail below follows the Standard’s required questions: actor, permission/
 - **Failure:** counter mismatch, negative/overflow value, multiple subscriptions → show/reconcile only under approved policy.
 - **Acceptance:** values shown trace to source fields; Finance Team sees only assigned College.
 - **QA:** SUB-QA-065–068.
-- **Decision refs:** SUB-D19/D20/D21.
+- **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
 
 ### SUB-F015 — Allocate seats to Department
 
@@ -920,7 +920,7 @@ The detail below follows the Standard’s required questions: actor, permission/
 - **Failure:** allocation exceeds capacity, foreign Department, allocation below current use → policy-dependent.
 - **Acceptance:** allocation cannot exceed approved constraints; unauthorized actor denied; no seat count change outside canonical event.
 - **QA:** SUB-QA-069–072.
-- **Decision refs:** SUB-D21/D23.
+- **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
 
 ### SUB-F016 — Determine seat usage
 
@@ -932,7 +932,7 @@ The detail below follows the Standard’s required questions: actor, permission/
 - **Failure:** duplicate event, missing organization, counter drift → reconciliation policy TBD.
 - **Acceptance:** usage changes only on approved event; retries do not double-count; cross-College transfer follows approved rule.
 - **QA:** SUB-QA-073–078.
-- **Decision refs:** SUB-D19/D20/D21.
+- **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
 
 ### SUB-F017 — Generate and manage Invoice
 
@@ -944,7 +944,7 @@ The detail below follows the Standard’s required questions: actor, permission/
 - **Failure:** duplicate invoice trigger, invalid subscription, invoice number conflict, PDF generation failure → policy TBD.
 - **Acceptance:** invoice links to valid Subscription/College; no unauthorized invoice access; duplicate trigger follows idempotency rule.
 - **QA:** SUB-QA-079–084.
-- **Decision refs:** SUB-D05/D17/D28.
+- **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
 
 ### SUB-F018 — View/download Invoice
 
@@ -956,7 +956,7 @@ The detail below follows the Standard’s required questions: actor, permission/
 - **Failure:** missing invoice, expired link, unauthorized direct URL, PDF unavailable → no cross-tenant disclosure.
 - **Acceptance:** invoice history and PDF both enforce same scope.
 - **QA:** SUB-QA-085–088.
-- **Decision refs:** SUB-D13/D17/D18/D28.
+- **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
 
 ### SUB-F019 — Initiate or record PaymentTransaction
 
@@ -968,7 +968,7 @@ The detail below follows the Standard’s required questions: actor, permission/
 - **Failure:** gateway timeout, duplicate request, invalid callback, mismatched amount/currency, failed bank transfer verification → reject/mark pending per approved process.
 - **Acceptance:** payment records are scoped and traceable; idempotency prevents duplicate logical transaction; secret/payment data not exposed.
 - **QA:** SUB-QA-089–095.
-- **Decision refs:** SUB-D14/D15/D16.
+- **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
 
 ### SUB-F020 — Process payment result and reconciliation
 
@@ -979,7 +979,7 @@ The detail below follows the Standard’s required questions: actor, permission/
 - **Failure:** invalid signature, unknown transaction, callback replay, mismatched amount, delayed success after failure → policy decision required.
 - **Acceptance:** only trusted confirmation changes payment status; duplicates are idempotent; invoice/subscription side effects follow approved mapping.
 - **QA:** SUB-QA-096–101.
-- **Decision refs:** SUB-D15/D16.
+- **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
 
 ### SUB-F021 — Link payment, invoice, quote, and subscription
 
@@ -989,7 +989,7 @@ The detail below follows the Standard’s required questions: actor, permission/
 - **Rules:** Invoice references Subscription/College; PaymentTransaction may reference Subscription/College/Invoice/PricingQuote; whether fields are nullable/mandatory is not stated.
 - **Acceptance:** no cross-College billing relationship; related record history is consistent.
 - **QA:** SUB-QA-102–104.
-- **Decision refs:** SUB-D17/D28.
+- **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
 
 ### SUB-F022 — Enforce billing/seat scope
 
@@ -1000,7 +1000,7 @@ The detail below follows the Standard’s required questions: actor, permission/
 - **Failure:** foreign College IDs, direct object ID, altered query, PDF URL tampering → deny without data leak.
 - **Acceptance:** every list/detail/mutation/export/download is scope-filtered; frontend alone is insufficient.
 - **QA:** SUB-QA-105–109.
-- **Decision refs:** SUB-D13/D18.
+- **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
 
 ### SUB-F023 — Apply subscription access gating
 
@@ -1011,7 +1011,7 @@ The detail below follows the Standard’s required questions: actor, permission/
 - **Rules:** ACTIVE/GRACE_PERIOD/SUSPENDED/CANCELLED meanings and College-status precedence must be defined. Do not infer access from labels.
 - **Acceptance:** gating matches approved policy and is consistent across modules; no access policy is implemented while open.
 - **QA:** SUB-QA-110–114.
-- **Decision refs:** SUB-D11/D12/D24/D25.
+- **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
 
 ### SUB-F024 — Audit billing/subscription changes
 
@@ -1021,35 +1021,39 @@ The detail below follows the Standard’s required questions: actor, permission/
 - **Privacy:** avoid secrets, full payment credentials, or unnecessary gateway payload in audit.
 - **Acceptance:** critical subscription/payment/invoice/seat changes are auditable according to Module 15; audit failure behavior is coordinated with Module 18.
 - **QA:** SUB-QA-115–117.
-- **Decision refs:** SUB-D27/D28.
+- **Adopted decision reference:** [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md); use the function behavior overlay in Section 21 for the authoritative target rule.
 
 ## 16. Additional business rules and validation matrix
 
-| Rule | Validation | Status |
-|---|---|---|
-| SUB-R01 | Subscription must reference existing College and Plan. | Derived from schema |
-| SUB-R02 | Finance Team must be scoped to its assigned College for every billing operation. | Source-confirmed RBAC |
-| SUB-R03 | Quote/invoice/payment currencies and amounts must reconcile under approved financial policy. | Derived; formula TBD |
-| SUB-R04 | Payment idempotencyKey must be used according to approved duplicate transaction policy. | Schema-supported; policy TBD |
-| SUB-R05 | Seat capacity and usage must not be calculated from overlapping fields until canonical model is approved. | TBD |
-| SUB-R06 | Plan deactivation must not silently rewrite existing subscription history. | Derived safeguard |
-| SUB-R07 | Subscription status is not interchangeable with College EntityStatus. | Source gap / derived |
-| SUB-R08 | Untrusted client-side payment result must not be treated as confirmed payment. | Security recommendation; requires approval |
-| SUB-R09 | Seat usage trigger must be idempotent and consistent across Module 1/4. | Derived |
-| SUB-R10 | All invoice/payment/quote relationships must remain within the same College billing context. | Derived |
+### 16.1 Adopted business rules
 
-| Validation ID | Condition | Expected behavior | Status |
-|---|---|---|---|
-| SUB-V01 | Subscription references missing College/Plan | Reject before write | Derived |
-| SUB-V02 | Finance Team requests foreign College billing record | Deny | RBAC |
-| SUB-V03 | Quote expired | Reject acceptance/checkout if expiry policy approved | TBD |
-| SUB-V04 | Payment amount/currency mismatches quote/invoice | Reject or hold for reconciliation per policy | TBD |
-| SUB-V05 | Duplicate payment callback/idempotency key | No duplicate financial effect | Derived; policy TBD |
-| SUB-V06 | Seat allocation exceeds allowed capacity | Reject or follow approved override | TBD |
-| SUB-V07 | Renewal dates are inconsistent | Reject/hold according to date rules | TBD |
-| SUB-V08 | Plan inactive | New purchase eligibility follows approved plan policy | TBD |
-| SUB-V09 | Invoice status transition invalid | Reject; preserve state | Module 17/TBD |
-| SUB-V10 | College status and Subscription status disagree | Apply approved precedence; do not infer | TBD |
+| Rule | Adopted validation |
+|---|---|
+| SUB-R01 | Subscription references an existing College and Plan/Plan version. |
+| SUB-R02 | Every Finance Team operation is restricted to the assigned College. |
+| SUB-R03 | Quote, invoice and payment amounts/currency reconcile under the saved commercial/tax snapshot. |
+| SUB-R04 | Payment idempotency prevents duplicate logical charges and duplicate financial effects. |
+| SUB-R05 | College capacity mirrors current purchasedSeats; usedSeats is derived from active Student seat assignments. |
+| SUB-R06 | Plan deactivation/version change never silently rewrites existing subscription terms. |
+| SUB-R07 | SubscriptionStatus and College EntityStatus are independent gates. |
+| SUB-R08 | Browser/client payment result cannot confirm a financial settlement. |
+| SUB-R09 | Seat usage comes from active Student membership events and is idempotent across Modules 1/4. |
+| SUB-R10 | Invoice/payment/quote/subscription references must belong to the same College and currency. |
+
+### 16.2 Validation matrix
+
+| Validation ID | Condition | Expected behavior |
+|---|---|---|
+| SUB-V01 | Subscription references missing College/Plan | Reject before write. |
+| SUB-V02 | Finance Team requests foreign College billing record | Return 404; no data disclosure. |
+| SUB-V03 | Quote is expired | Reject acceptance; retain quote history as EXPIRED. |
+| SUB-V04 | Payment amount/currency mismatches invoice/quote | Reject or quarantine for reconciliation; do not activate entitlement. |
+| SUB-V05 | Duplicate payment callback/idempotency key | Apply financial and entitlement effect once. |
+| SUB-V06 | Seat allocation exceeds College capacity | Reject transaction; do not oversell. |
+| SUB-V07 | Renewal dates are inconsistent | Block renewal calculation and flag for correction; do not invent dates. |
+| SUB-V08 | Plan inactive/deactivated | Reject new purchase while retaining historical plan snapshots. |
+| SUB-V09 | Invalid Invoice state transition | Reject; preserve existing state and financial record. |
+| SUB-V10 | College status and Subscription status differ | Evaluate each independent gate; do not mutate one from the other. |
 
 ## 17. Edge cases and failure handling
 
@@ -1071,7 +1075,7 @@ The detail below follows the Standard’s required questions: actor, permission/
 - College is suspended while Subscription remains ACTIVE.
 - Gateway outage, reconciliation timeout, or partial processing.
 
-Each detailed policy is TBD unless explicitly approved in the decision log or Modules 17/18.
+Apply the adopted policy in [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md). Implementation details governed by Modules 17/18 remain pending until those module contracts are implemented.
 
 ## 18. Cross-module dependencies
 
@@ -1083,38 +1087,27 @@ Each detailed policy is TBD unless explicitly approved in the decision log or Mo
 - Module 17: Plan/Quote/Subscription/Invoice/Payment state transitions.
 - Module 18: payment retries, partial failure, reconciliation and race conditions.
 
-## 19. Decision log supplement
+## 19. Adopted decision register
 
-The initial SUB-D01–SUB-D28 log remains in Section 10. Additional decisions:
-
-| Decision ID | Question | Impact | Owner | Status |
-|---|---|---|---|---|
-| SUB-D29 | Define per-action permission for plan create/update/deactivate. | Plan security | Product/Security | Open |
-| SUB-D30 | Define subscription create/update/status action permissions per role. | Billing security | Product/Security | Open |
-| SUB-D31 | Define field allowlist for Finance Team subscription updates. | Tenant billing | Product/Security | Open |
-| SUB-D32 | Define quote creator, approver, and revision permissions. | Quote lifecycle | Product/Finance | Open |
-| SUB-D33 | Define invoice create/void/correct/download permissions. | Financial integrity | Product/Finance | Open |
-| SUB-D34 | Define payment initiation, manual bank confirmation, and refund permissions. | Payment control | Finance/Security | Open |
-| SUB-D35 | Define mandatory nullable/required references for PaymentTransaction per transaction type. | Schema/data integrity | Architecture/Finance | Open |
-| SUB-D36 | Define invoice/payment event idempotency keys and uniqueness constraints. | Duplicate financial processing | Architecture | Open |
-| SUB-D37 | Define invoice PDF storage, signed link, access expiration and retention. | Privacy/security | Architecture/Security | Open |
-| SUB-D38 | Define reconciliation and recovery when payment succeeds but related record update fails. | Financial consistency | Architecture/Finance | Open |
-| SUB-D39 | Define feature/seat access response and UI behavior for each subscription state. | Product availability | Product/Security | Open |
-| SUB-D40 | Define subscription/seat change concurrency and effective-time policy. | Billing correctness | Architecture/Finance | Open |
+SUB-D01–SUB-D40 are adopted and maintained in [ADOPTED-DECISIONS.md](./ADOPTED-DECISIONS.md). That record is the single authoritative decision register. Historical SUB-D01–SUB-D28 and supplementary SUB-D29–SUB-D40 numbering in the earlier draft has been superseded; function and QA references should point to the adopted decision file rather than relying on the old numbering.
 
 ## 20. Acceptance criteria and review gate
 
-Module 3 is ready for product review when:
-- Every function in SUB-F001–SUB-F024 has source/evidence status and a clear actor/scope.
-- Plan, subscription, quote, invoice, payment and seat functions have inputs, flow, validation, data/state, success/failure and QA references.
-- Finance Team tenant isolation is explicit for reads, writes, downloads, payment, quote and seat operations.
-- No price formula, renewal rule, gateway integration, refund policy, seat-count trigger, or access gating is invented.
-- SUB-D01–SUB-D40 are reviewed/assigned; product/finance/security decisions remain open.
-- Acceptance criteria are testable and QA tests include expected results.
-- Dependencies on Modules 1, 2, 4, 13, 15, 17 and 18 are explicit.
+Module 3 product baseline is accepted when:
+- [x] Fixed College package model with add-on seats is adopted.
+- [x] CUSTOM offers are handled through SUPER_ADMIN-approved quotes.
+- [x] SUPER_ADMIN-editable Plan and billing configuration is adopted.
+- [x] Existing subscriptions retain accepted terms unless explicitly migrated.
+- [x] Subscription, renewal, grace, cancellation and access behavior is adopted.
+- [x] Seat counting, department allocation and enforcement behavior is adopted.
+- [x] Finance Team, HOD, Manager and Student billing visibility boundaries are adopted.
+- [x] SUB-D01–SUB-D40 are recorded in the decision register.
+- [ ] Schema changes, indexes, seat ledger and immutable financial snapshots are implemented.
+- [ ] Canonical RBAC and Module 1/2/4 contracts are aligned.
+- [ ] Gateway/webhook, invoice/PDF, audit, notification and state-machine integrations are implemented.
+- [ ] QA cases are executed and signed off against the implementation.
 
-**Review gate:** Module 3 only. Commit status means document versioning, not approval of billing/financial behavior. Do not treat any recommendation or open decision as implementation-ready.
-
+**Readiness:** Product decisions are adopted. Implementation readiness and QA sign-off remain pending.
 
 ## 21. Adopted function behavior — implementation reference
 
