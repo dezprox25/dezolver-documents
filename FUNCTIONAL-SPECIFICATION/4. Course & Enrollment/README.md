@@ -601,22 +601,26 @@ All product decisions COURSE-D01–COURSE-D40 are adopted for Module 4 v1. Full 
 
 ## 11. Acceptance checklist
 
-Module 4 is implementation-ready when:
-- [ ] Course creation permissions and ownership are explicit.
-- [ ] Course metadata validation and code uniqueness are defined.
-- [ ] Scope enum semantics are approved.
-- [ ] Course status transitions and visibility are defined.
-- [ ] Course-to-Section assignment rules are finalized.
-- [ ] Enrollment creation, eligibility, duplicate handling, and withdrawal are defined.
-- [ ] CourseSection vs CourseEnrollment behavior is explicit.
-- [ ] Student My Courses visibility is defined.
-- [ ] Course completion criteria and completedAt updates are finalized.
-- [ ] CourseProblem association and ordering/weight requirements are approved.
-- [ ] HOD and Manager permissions are explicitly scoped.
-- [ ] Subscription/seat checks are coordinated with Module 3.
-- [ ] Course audit and notification requirements are assigned to their modules.
+**Product policy — adopted**
+- [x] Course creation, metadata validation, code uniqueness, and role/ownership policy.
+- [x] ContentScope definitions and College tenant boundary.
+- [x] Course status transitions, visibility, archive, and restore behavior.
+- [x] CourseSection audience relationship and automatic Option A enrollment.
+- [x] Eligibility, duplicate handling, withdrawal, repeat prohibition, and history retention.
+- [x] Student My Courses and self-enrollment policy.
+- [x] Completion and completedAt behavior.
+- [x] CourseProblem and GroupCourseProblem boundaries.
+- [x] SUPER_ADMIN, FINANCE_TEAM, HOD, MANAGER, and STUDENT access scopes.
+- [x] Module 3 entitlement and seat-trigger contract.
+- [x] Notifications and audit event responsibilities.
 
----
+**Engineering and release — pending**
+- [ ] CourseEnrollment schema migration and indexes.
+- [ ] Canonical RBAC and page/API permission matrices updated.
+- [ ] Module 2 Section/roster events and audience reconciliation implemented.
+- [ ] Enrollment outbox/retry/idempotency and Module 3 entitlement integrated.
+- [ ] Modules 5–10, 13, 15, 17, and 18 contracts integrated.
+- [ ] 180 QA cases executed with evidence; security review and release sign-off complete.
 
 ## 12. Dependencies and interfaces
 
@@ -672,9 +676,9 @@ This supplement expands the existing source-based draft into function-level cont
 | CourseEnrollment | Student-to-Course association | Schema |
 | CourseProblem | Course-to-Problem association | Schema |
 | GroupCourseProblem | Group + Course + Problem association; Module 10 owns group semantics | Schema |
-| Scope | ContentScope value on Course | Schema; meaning TBD |
-| Publication status | DRAFT / PUBLISHED / ARCHIVED | Schema; transitions TBD |
-| Completion | completedAt timestamp on CourseEnrollment | Schema; criteria TBD |
+| Scope | ContentScope value on Course | Schema; adopted meanings in Section 24.3 |
+| Publication status | DRAFT / PUBLISHED / ARCHIVED | Schema; adopted transitions in Section 24.6 |
+| Completion | CourseEnrollment status + completedAt | Adopted HOD verification in Section 24.8; status is schema delta |
 
 ### 14.1 Source version conflict matrix
 
@@ -703,7 +707,7 @@ This is the adopted v1 authorization baseline. Backend authorization is authorit
 | MANAGER | Assigned Section Courses | SECTION_ONLY own Section | No | Own Section only | Own Section only | Read assigned Section; no completion override |
 | STUDENT | Own enrolled Courses | No | No | No | View permitted content | Own record only; no self-enrollment/withdrawal |
 
-Manager Create/Update* is constrained to SECTION_ONLY Courses and the Manager's assigned Section. Student permission is View only: the platform View/Enroll conflict is reconciled to the more restrictive Page/API matrices. Finance metadata View does not include enrollment or academic progress. HOD is College + Department scoped; no role crosses Course.collegeId. Direct IDs, search, APIs, exports, and UI routes enforce identical scope/ownership checks.
+Manager Create/Update* is constrained to SECTION_ONLY Courses and the Manager's assigned Section. HOD may create/manage SECTION_ONLY and DEPT_WIDE Courses only within its assigned Department; only SUPER_ADMIN may create a College-wide GLOBAL Course or change a Course into/out of GLOBAL. HOD cannot widen an owned Course beyond its Department. Student permission is View only: the platform View/Enroll conflict is reconciled to the more restrictive Page/API matrices. Finance metadata View does not include enrollment or academic progress. HOD is College + Department scoped; no role crosses Course.collegeId. Direct IDs, search, APIs, exports, and UI routes enforce identical scope/ownership checks.
 
 ## 16. Functional inventory
 
@@ -1042,7 +1046,7 @@ The complete adopted decision set is COURSE-D01–COURSE-D40 in ADOPTED-DECISION
 This section is authoritative where earlier source-based passages retain TBD/conditional language.
 
 ### 24.1 Roles and authorization
-SUPER_ADMIN has platform-wide Course administration. HOD has full administration within assigned College + Department, including publish/archive/restore, Section/Problem association, Department enrollment management and completion verification. Manager may create/update SECTION_ONLY Courses and manage only its assigned Section's audience/Problem links; it cannot widen scope, publish, archive, restore or mark completion. FINANCE_TEAM has assigned-College Course metadata View only, with no enrollment/progress data and no dedicated page requirement. STUDENT has View only, own enrolled Courses and own enrollment; no self-enrollment or self-withdrawal. Every API/search/export/direct ID enforces server-resolved scope; Course.collegeId is the hard tenant boundary.
+SUPER_ADMIN has platform-wide Course administration. HOD has full administration within assigned College + Department for Department-owned SECTION_ONLY/DEPT_WIDE Courses, including publish/archive/restore, Section/Problem association, Department enrollment management and completion verification. HOD cannot create or widen to GLOBAL. SUPER_ADMIN alone creates or changes College-wide GLOBAL scope. Manager may create/update SECTION_ONLY Courses and manage only its assigned Section's audience/Problem links; it cannot widen scope, publish, archive, restore or mark completion. FINANCE_TEAM has assigned-College Course metadata View only, with no enrollment/progress data and no dedicated page requirement. STUDENT has View only, own enrolled Courses and own enrollment; no self-enrollment or self-withdrawal. Every API/search/export/direct ID enforces server-resolved scope; Course.collegeId is the hard tenant boundary.
 
 ### 24.2 Metadata
 title required, trimmed, non-empty, max 255. code required, trimmed, uppercase-normalized, max 50, unique case-insensitively within College; archived codes stay reserved. description optional. Creator, College, Department and timestamps are server controlled. GLOBAL Courses retain the owning Department for audit but broaden audience only within their College. No duration, semester, term, prerequisites, credits, instructor or public catalog fields are assumed.
@@ -1052,9 +1056,9 @@ title required, trimmed, non-empty, max 255. code required, trimmed, uppercase-n
 |---|---|---|
 | SECTION_ONLY | Explicit Section(s) only | CourseSection links required; at least one before publish |
 | DEPT_WIDE | All active Sections in owning Department | Materialize current links and reconcile new/activated Sections |
-| GLOBAL | All active Sections in owning College across Departments | Materialize current links and reconcile new/activated Sections |
+| GLOBAL | All active Sections in owning College across Departments | SUPER_ADMIN only; materialize current links and reconcile new/activated Sections |
 
-GLOBAL is never public or cross-College. DRAFT may have audience links prepared but creates no Student enrollments until published. Module 2 Section creation/activation must reconcile DEPT_WIDE/GLOBAL audiences. Scope/Department/Section changes require HOD/SUPER_ADMIN, impact preview and audit. Existing enrollments are retained; Students outside the changed audience receive history-only Course access.
+GLOBAL is never public or cross-College. DRAFT may have audience links prepared but creates no Student enrollments until published. Module 2 Section creation/activation must reconcile DEPT_WIDE/GLOBAL audiences. SECTION_ONLY/DEPT_WIDE changes within the owning Department require HOD/SUPER_ADMIN; any GLOBAL creation/change requires SUPER_ADMIN. All require impact preview and audit. Existing enrollments are retained; Students outside the changed audience receive history-only Course access.
 
 ### 24.4 Option A — automatic CourseEnrollment
 **Adopted model:** assigning a PUBLISHED Course to a Section automatically creates CourseEnrollment for every eligible active Student in that Section. If assigned while DRAFT, enrollment occurs when it becomes PUBLISHED. A Student who later joins/becomes active in an included Section is automatically enrolled in every applicable PUBLISHED Course.
@@ -1090,7 +1094,7 @@ Module 3 solely owns entitlement and seat capacity. Active Student membership is
 The following are required proposed changes; they are not present in the reconstructed schema as fetched.
 
 ### 25.1 Course
-Keep current fields. Keep departmentId required as owning Department even for GLOBAL; audience spans Departments only within collegeId. Add case-insensitive unique (collegeId, normalizedCode) or normalized uppercase code + unique (collegeId, code) index.
+Keep current fields. Keep departmentId required as owning Department even for GLOBAL; audience spans Departments only within collegeId. Only SUPER_ADMIN may create or change GLOBAL scope. Add case-insensitive unique (collegeId, normalizedCode) or normalized uppercase code + unique (collegeId, code) index.
 
 ### 25.2 CourseSection
 Keep courseId, sectionId, createdAt. Add unique (courseId, sectionId) and audience reconciliation indexes. Treat links as Course audience/availability, not individual Student enrollment. Removal stops future auto-enrollment and is audited.

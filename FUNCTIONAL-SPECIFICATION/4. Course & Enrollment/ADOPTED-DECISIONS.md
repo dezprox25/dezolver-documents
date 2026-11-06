@@ -15,7 +15,7 @@ Adopted by explicit user direction on 2026-11-06: use Option A and recommended M
 | COURSE-D04 | Finance/SUPER_ADMIN | SUPER_ADMIN platform-wide; FINANCE_TEAM metadata-only View in assigned College; no academic detail or mapped-page requirement. |
 | COURSE-D05 | Field validation | title required/non-empty/max255; code required/trimmed/uppercase/max50; description optional. |
 | COURSE-D06 | Code uniqueness | code unique case-insensitively within College; archived code remains reserved. |
-| COURSE-D07 | ContentScope semantics | SECTION_ONLY explicit Sections; DEPT_WIDE active Sections in owning Department; GLOBAL active Sections in owning College. |
+| COURSE-D07 | ContentScope semantics | SECTION_ONLY explicit Sections; DEPT_WIDE all active Sections in owning Department; GLOBAL all active Sections in owning College; only SUPER_ADMIN may create/change GLOBAL and HOD remains Department-bounded. |
 | COURSE-D08 | College boundary | GLOBAL never public or cross-College; Course retains owning College and Department. |
 | COURSE-D09 | Audience materialization | SECTION_ONLY needs CourseSection before publish; DEPT_WIDE/GLOBAL materialize present and future active Sections. |
 | COURSE-D10 | Assignment authority | SUPER_ADMIN/HOD assign/remove in scope; Manager own Section for SECTION_ONLY only. |
@@ -39,7 +39,7 @@ Adopted by explicit user direction on 2026-11-06: use Option A and recommended M
 | COURSE-D28 | Status transitions | Transitions: create→DRAFT; DRAFT→PUBLISHED; PUBLISHED→DRAFT; DRAFT/PUBLISHED→ARCHIVED; ARCHIVED→DRAFT. HOD/SUPER_ADMIN only. |
 | COURSE-D29 | Enrollment trigger matrix | Reconcile on published assignment, Course publish, Student join/activation, and Section activation in DEPT_WIDE/GLOBAL; outbox/retry/idempotency. |
 | COURSE-D30 | Enrollment privacy | Enrollment read: SUPER_ADMIN global; HOD Department; Manager Section; Student own; Finance none. Creation system-owned. |
-| COURSE-D31 | Scope cross-check | Scope meanings are those in D07; GLOBAL College-wide only. |
+| COURSE-D31 | Scope cross-check | Scope meanings are those in D07; GLOBAL is College-wide only and SUPER_ADMIN controlled. |
 | COURSE-D32 | Scope change impact | Scope/org/Section changes require HOD/SUPER_ADMIN, impact preview and audit; preserve enrollments and make out-of-scope history-only. |
 | COURSE-D33 | Archive/retention | Archive soft retirement; restore to DRAFT; no hard delete/cascade. |
 | COURSE-D34 | Problem association | Problem attach requires same-College Problem and Module 5 policy; unordered/unlink-only; Manager own SECTION_ONLY scope. |
