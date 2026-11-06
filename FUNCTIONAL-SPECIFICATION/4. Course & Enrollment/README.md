@@ -1,11 +1,11 @@
 # 4. Course & Enrollment
 
 **Document type:** Functional Specification  
-**Version:** 0.1 — Initial source-based draft  
-**Status:** Awaiting user review and approval  
+**Version:** 1.0 — Adopted target baseline  
+**Status:** Product decisions adopted (COURSE-D01–COURSE-D40); engineering implementation gates remain  
 **Scope:** Course creation and management, course scope, section assignment, student enrollment, course visibility, course-problem association, and course completion data
 
-> **Specification principle:** This module uses DEZOLVER Business Flow v2, Page-to-DB Mapping v2, and the schema reconstruction stored in the repository. It separates source-confirmed facts from derived safeguards and unresolved decisions. No missing behavior is silently assumed.
+> **Specification principle:** This baseline reconciles Business Flow (original/v2), Page–DB Mapping (original/v2), RBAC, target schema, and reviewed legacy Module 04 documentation. Sections 24–26 and ADOPTED-DECISIONS.md are normative where earlier draft passages retain TBD wording.
 
 ---
 
@@ -57,7 +57,7 @@ Courses connect:
 
 ## 3. Source documents and interpretation
 
-### 3.1 Business Flow v2
+### 3.1 Business Flow (original and v2)
 
 The business flow establishes this academic context:
 
@@ -68,7 +68,7 @@ The business flow establishes this academic context:
 
 This confirms Courses as part of the HOD-managed department academic structure and the Student learning journey. It does **not** define detailed course creation, enrollment, or completion workflows.
 
-### 3.2 Page-to-DB Mapping v2
+### 3.2 Page-to-DB Mapping (original and v2)
 
 | Role | Page | Course-related entities mapped |
 |---|---|---|
@@ -81,7 +81,7 @@ This confirms Courses as part of the HOD-managed department academic structure a
 | Student | Dashboard | CourseEnrollment |
 | Student | My Courses | Course, CourseSection, CourseEnrollment, CourseProblem, GroupCourseProblem, Problem, Section |
 
-The mapping confirms page/entity associations, not final UI behavior or all action permissions.
+The original and v2 mappings confirm page/entity associations, not complete lifecycle behavior. RBAC platform/page/API matrices were also reviewed; conflicts are resolved in Sections 15 and 24.
 
 ### 3.3 Schema reconstruction
 
@@ -146,7 +146,7 @@ Course includes collegeId, departmentId, and createdById.
 
 **Derived consistency rule:** the Course Department must belong to the Course College, and the creator must be authorized to create Courses within that scope.
 
-The Business Flow identifies Courses within HOD's Department academic management.
+The original and v2 Business Flow identify Courses within HOD's Department academic management; v2 adds backend/Judge0 context but neither defines the automatic enrollment algorithm.
 
 **TBD:**
 - Whether HOD is the primary/only Course creator.
@@ -595,39 +595,9 @@ Course enrollment may consume seats, but the canonical seat-counting trigger is 
 
 ---
 
-## 10. Decisions required before finalization
+## 10. Adopted product decision register
 
-| ID | Decision | Why it matters |
-|---|---|---|
-| COURSE-D01 | Define who can create Courses (HOD, SUPER_ADMIN, Manager, or other). | Ownership/permissions |
-| COURSE-D02 | Define HOD Course CRUD/publish/archive permissions. | RBAC |
-| COURSE-D03 | Define Manager Course permissions: view, create, edit, publish, assign, enroll, or activity-only. | Section scope |
-| COURSE-D04 | Define whether FINANCE_TEAM and SUPER_ADMIN can view/manage academic Courses. | Platform access |
-| COURSE-D05 | Define Course required fields and code format. | Validation |
-| COURSE-D06 | Define Course code uniqueness scope and case handling. | Duplicate prevention |
-| COURSE-D07 | Define exact meanings of DEPT_WIDE, SECTION_ONLY, and GLOBAL. | Course visibility |
-| COURSE-D08 | Define whether GLOBAL Course can cross College/Department boundaries. | Tenant isolation |
-| COURSE-D09 | Define whether Course must be linked to one or more Sections. | CourseSection behavior |
-| COURSE-D10 | Define who may assign/remove Sections from Course. | Academic administration |
-| COURSE-D11 | Define whether CourseSection assignment automatically enrolls all Section Students. | Enrollment mechanics |
-| COURSE-D12 | Define enrollment triggers (manual, automatic, self-enrollment, etc.). | Student access |
-| COURSE-D13 | Define Student enrollment eligibility and cross-section/department rules. | Authorization |
-| COURSE-D14 | Define duplicate enrollment behavior and uniqueness constraints. | Data consistency |
-| COURSE-D15 | Define withdrawal, removal, reactivation, and repeat-course behavior. | Enrollment lifecycle |
-| COURSE-D16 | Define whether CourseEnrollment needs status beyond enrolledAt/completedAt. | State modeling |
-| COURSE-D17 | Define Course completion criteria and when completedAt is set. | Completion tracking |
-| COURSE-D18 | Define completion reset/reversal and whether repeats create new enrollment. | History |
-| COURSE-D19 | Define CourseProblem ordering, required/optional, weighting, and scheduling. | Course structure |
-| COURSE-D20 | Define effect of adding/removing Problems after enrollment. | Progress/history |
-| COURSE-D21 | Define My Courses visibility: enrolled-only vs Section-available/discoverable. | Student UX |
-| COURSE-D22 | Define DRAFT/PUBLISHED/ARCHIVED visibility and action rules. | Publication |
-| COURSE-D23 | Define Course archive/delete behavior and historical retention. | Data integrity |
-| COURSE-D24 | Define Course search/filter/sort/pagination and role-specific columns. | UI |
-| COURSE-D25 | Define subscription/seat access rules during enrollment and Course access. | Module 3 integration |
-| COURSE-D26 | Define notifications for Course publish, assignment, enrollment, completion. | Module 13 |
-| COURSE-D27 | Define Course-related audit events and metadata. | Module 15 |
-
----
+All product decisions COURSE-D01–COURSE-D40 are adopted for Module 4 v1. Full rationale, source reconciliation, and implementation implications are recorded in ADOPTED-DECISIONS.md. No COURSE-D01–D40 remains an open product decision. Remaining work is engineering/schema/RBAC integration and QA execution, listed in Sections 25–26.
 
 ## 11. Acceptance checklist
 
@@ -690,9 +660,10 @@ This supplement expands the existing source-based draft into function-level cont
 
 - **Source-confirmed:** explicit in Business Flow v2/original, Page-to-DB Mapping v2/original, RBAC, or schema.
 - **Derived:** logical consistency/security behavior based on source facts.
-- **TBD / Decision Required:** missing or conflicting behavior.
-- **Recommendation:** suggestion only; not approved.
-- No legacy implementation was inspected; no legacy-verified behavior is claimed.
+- **Adopted target behavior:** v1 policy recorded as COURSE-D01–COURSE-D40.
+- **Engineering gate:** schema migration, canonical RBAC, events, implementation, and QA verification remain pending.
+- **Legacy documentation reviewed:** legacy Module 04 README/SPECIFICATION were reviewed as historical evidence; this is not a claim that legacy source code was re-executed or re-verified.
+- Legacy-only CourseRoom/Room ordering, Syllabus/overlays, Learning Paths/PathProgress, and legacy API contracts are not imported into target Module 4.
 
 | Term | Meaning | Evidence |
 |---|---|---|
@@ -722,51 +693,47 @@ This supplement expands the existing source-based draft into function-level cont
 
 ## 15. Role, action, and scope matrix
 
-This preserves source permissions; it does not settle conflicting entries.
+This is the adopted v1 authorization baseline. Backend authorization is authoritative.
 
-| Role | Course view | Create | Update | Delete/archive | CourseProblem | Enrollment | Scope |
-|---|---|---|---|---|---|---|---|
-| SUPER_ADMIN | Allow | Full CRUD | Full CRUD | Full CRUD | Full CRUD | Global view; action policy TBD | Global |
-| FINANCE_TEAM | View per platform matrix | Not granted | Not granted | Not granted | View per platform matrix | Not mapped | Assigned College |
-| HOD | Full CRUD | Full CRUD | Full CRUD | Full CRUD | Full CRUD | CourseEnrollment mapped; action TBD | College + Department |
-| MANAGER | V/C/U* in platform/page/API matrices | Create* | Update* | Delete not explicitly granted | Create/Update* in platform matrix; detail TBD | Section student activity; enrollment action TBD | College + Department + assigned Section/permitted Group |
-| STUDENT | View/Enroll in platform matrix; View in page/API matrix | No | No | No | View | Self-enrollment conflict | Own + permitted academic resources |
+| Role | Course view | Create/update | Publish/archive/restore | Assign Sections | CourseProblem | Enrollment access |
+|---|---|---|---|---|---|---|
+| SUPER_ADMIN | All Colleges | Full | Full | All Colleges | Full | Global read and controlled lifecycle |
+| FINANCE_TEAM | Assigned College metadata only | No | No | No | No | No CourseEnrollment/Student detail |
+| HOD | Assigned College + Department | Full in Department | Full in Department | Any permitted Section in Department | Full in Department | Department read/withdraw; verify completion |
+| MANAGER | Assigned Section Courses | SECTION_ONLY own Section | No | Own Section only | Own Section only | Read assigned Section; no completion override |
+| STUDENT | Own enrolled Courses | No | No | No | View permitted content | Own record only; no self-enrollment/withdrawal |
 
-- * means additional organization scope must be checked.
-- CourseSection and CourseEnrollment lack separate detailed permission matrices in the sources.
-- Student “Enroll” conflict must be resolved before self-enrollment is implemented.
-- Page mapping is not authorization.
-- Backend permission, scope, ownership, and relationship checks are mandatory.
+Manager Create/Update* is constrained to SECTION_ONLY Courses and the Manager's assigned Section. Student permission is View only: the platform View/Enroll conflict is reconciled to the more restrictive Page/API matrices. Finance metadata View does not include enrollment or academic progress. HOD is College + Department scoped; no role crosses Course.collegeId. Direct IDs, search, APIs, exports, and UI routes enforce identical scope/ownership checks.
 
 ## 16. Functional inventory
 
-| ID | Function | Actor | Entry point | Type | Status |
-|---|---|---|---|---|---|
-| COURSE-F001 | List/view Courses | Staff/Student | Dashboard, Courses & Labs, My Courses | Read | Draft |
-| COURSE-F002 | Create Course | HOD/SUPER_ADMIN; Manager conditional | Courses & Labs | Create | Decision required |
-| COURSE-F003 | Update Course metadata | HOD/SUPER_ADMIN; Manager conditional | Course edit | Update | Decision required |
-| COURSE-F004 | Archive/delete/restore Course | HOD/SUPER_ADMIN | Course management | Lifecycle | Decision required |
-| COURSE-F005 | Publish/change Course status | HOD/SUPER_ADMIN; Manager conditional | Course status action | Lifecycle | Decision required |
-| COURSE-F006 | Set Course scope | Authorized Course admin | Course form/details | Configuration | Decision required |
-| COURSE-F007 | Assign Course to Section | HOD/SUPER_ADMIN; Manager TBD | Section assignments | Association | Decision required |
-| COURSE-F008 | Remove Course-Section link | HOD/SUPER_ADMIN; Manager TBD | Section assignments | Association | Decision required |
-| COURSE-F009 | View Section assignments | Staff/Student permitted | Course details | Read | Draft |
-| COURSE-F010 | Attach Problem to Course | HOD/SUPER_ADMIN/Manager per RBAC | Course Problems | Association | Decision required |
-| COURSE-F011 | Remove Problem from Course | HOD/SUPER_ADMIN/Manager per RBAC | Course Problems | Association | Decision required |
-| COURSE-F012 | View Course Problems | Staff/Student permitted | Course/My Courses | Read | Draft |
-| COURSE-F013 | View My Courses | Student | My Courses/Dashboard | Read | Decision required |
-| COURSE-F014 | Open Course details/content | Staff/Student | Course list | Read/access | Decision required |
-| COURSE-F015 | View Course enrollments | HOD/Manager/Student own | Students/Course | Read | Decision required |
-| COURSE-F016 | Create/assign enrollment | HOD/SUPER_ADMIN; Manager TBD | Course/Students | Create | Decision required |
-| COURSE-F017 | Automatic Section enrollment | System | CourseSection event | System workflow | Not source-confirmed |
-| COURSE-F018 | Student self-enrollment | Student | My Courses | Workflow | RBAC conflict |
-| COURSE-F019 | Withdraw/remove/repeat enrollment | Student/staff/system | Enrollment action | Lifecycle | Decision required |
-| COURSE-F020 | View enrollment/completion state | Student/staff | My Courses/Students | Read | Draft |
-| COURSE-F021 | Determine Course completion | System/staff | Completion trigger | System workflow | Decision required |
-| COURSE-F022 | Search/filter/sort Courses | Staff/Student | Course list | Query/read | Decision required |
-| COURSE-F023 | Subscription/seat eligibility | System | Enrollment/course access | Authorization | Module 3 dependency |
-| COURSE-F024 | Read GroupCourseProblem in Course context | Staff/Student permitted | Course/Group page | Integration/read | Module 10 owner |
-| COURSE-F025 | Preserve history during Course changes | System | Course/enrollment/content changes | Data integrity | Decision required |
+| ID | Function | Actor | Type | Adopted status |
+|---|---|---|---|---|
+| COURSE-F001 | List/view Courses | Authorized roles | Read | Adopted |
+| COURSE-F002 | Create Course | SUPER_ADMIN/HOD; Manager SECTION_ONLY own Section | Create | Adopted |
+| COURSE-F003 | Update Course metadata | SUPER_ADMIN/HOD; Manager own Section | Update | Adopted |
+| COURSE-F004 | Archive/restore Course | SUPER_ADMIN/HOD | Lifecycle | Archive only; no hard delete |
+| COURSE-F005 | Publish/change Course status | SUPER_ADMIN/HOD | Lifecycle | Adopted |
+| COURSE-F006 | Set Course scope | SUPER_ADMIN/HOD; Manager SECTION_ONLY | Configuration | Adopted |
+| COURSE-F007 | Assign Course to Section | SUPER_ADMIN/HOD; Manager own Section | Association | Adopted |
+| COURSE-F008 | Remove Course-Section link | SUPER_ADMIN/HOD; Manager own Section | Association | Adopted |
+| COURSE-F009 | View Section assignments | Permitted staff/Student | Read | Adopted |
+| COURSE-F010 | Attach Problem to Course | SUPER_ADMIN/HOD; Manager own Section | Association | Adopted |
+| COURSE-F011 | Remove Problem from Course | SUPER_ADMIN/HOD; Manager own Section | Association | Adopted |
+| COURSE-F012 | View Course Problems | Permitted staff/Student | Read | Adopted |
+| COURSE-F013 | Student My Courses | Student | Read | Enrolled-only |
+| COURSE-F014 | Open Course details/content | Authorized staff/enrolled Student | Read/access | Adopted |
+| COURSE-F015 | View Course enrollments | HOD/Manager/SUPER_ADMIN; Student own | Read | Adopted |
+| COURSE-F016 | Create/assign enrollment | System automation | Create | Automatic only |
+| COURSE-F017 | Automatic Section enrollment | System | Workflow | Option A adopted |
+| COURSE-F018 | Student self-enrollment | Student | Workflow | Disabled in v1 |
+| COURSE-F019 | Withdraw/re-enroll | Authorized staff/system | Lifecycle | Staff withdrawal; repeat disabled |
+| COURSE-F020 | View enrollment/completion | Student/staff in scope | Read | Adopted |
+| COURSE-F021 | Course completion | HOD verification | Lifecycle | HOD-verified; no auto formula |
+| COURSE-F022 | Search/filter/sort | Authorized roles | Query | Adopted |
+| COURSE-F023 | Subscription/seat eligibility | Module 3 | Authorization | Module 3 authoritative |
+| COURSE-F024 | Read GroupCourseProblem | Group-authorized roles | Integration | Module 10 owns writes |
+| COURSE-F025 | Preserve history | System/authorized staff | Integrity | Adopted |
 
 ## 17. Detailed function specifications
 
@@ -868,28 +835,66 @@ This preserves source permissions; it does not settle conflicting entries.
 **Actors:** HOD/Manager/SUPER_ADMIN; Student own enrollment. **Scope:** HOD College+Department; Manager assigned Section; Student own record. **Entry:** Students/Course enrollment view. **Input:** Course ID and Student ID only if allowed. **Flow:** authorize Course → query CourseEnrollment/User → apply scope/ownership → return permitted fields. **Rules:** Manager cannot see other Section students; Student cannot access another studentId; Finance Team enrollment access not mapped. **Failure:** foreign Course/Student → deny/no data leak. **Acceptance:** scope and ownership enforced. **QA:** COURSE-QA-092–097. **Decisions:** D01/D03/D13/D24/D36.
 
 ### COURSE-F016 — Create/assign enrollment
-**Evidence/status:** CourseEnrollment schema confirmed; enrollment trigger/permission TBD. **Actors:** HOD/SUPER_ADMIN; Manager permission TBD. **Inputs:** courseId/studentId; enrolledAt system; completedAt null initially unless approved. **Preconditions:** Course/Student valid, actor scope, eligibility and Module 3 seat policy approved. **Flow:** select Student/Course → verify permission/hierarchy/status → check Module 3 seat rule → apply duplicate policy → create CourseEnrollment → return record. **Rules:** Section assignment does not auto-enroll absent decision D11. **Failure:** wrong scope, full seat capacity, duplicate, unavailable Course → reject per policy. **Acceptance:** only approved trigger creates enrollment and seat check is authoritative. **QA:** COURSE-QA-098–106. **Decisions:** D11–D16/D25/D29/D30/D35.
+**Actor:** system automation only for ordinary v1 operation. No manual HOD/Manager enrollment endpoint and no Student self-enrollment endpoint.
 
-### COURSE-F017 — Automatic Section enrollment
-**Evidence/status:** Not source-confirmed; only related entities exist. **Actor:** system if approved. **Trigger:** CourseSection change, if selected by product. **Candidate flow:** event → resolve eligible Section students → apply course eligibility/seat checks → create enrollments idempotently. **Important:** candidate only; do not implement before D11. **Failure:** partial enrollment, duplicate event, roster changes, seat shortage → policy TBD. **Acceptance:** blocked pending decision. **QA:** COURSE-QA-107–110 (blocked). **Decisions:** D11/D13/D14/D25/D29.
+- Triggers: published Course receives an audience Section; a Course is published; a Student joins/becomes active in an included Section; or Module 2 activates an included Section.
+- Flow: durable event/outbox → re-read Course, Section, Student membership and College state → validate same-College scope, active Student membership and Module 3 entitlement → insert with server timestamp/source → emit Module 13/15 events.
+- Student ID, enrollmentSource, enrolledAt, and initial status are server generated; client cannot set identity, creator, status, or timestamps.
+- Unique Course + Student key makes retry idempotent. Existing ENROLLED/COMPLETED records are never reset. Module 4 must not increment/decrement usedSeats.
+- Entitlement denial creates no row. Transient worker/storage failure retries missing pairs without reporting partial success.
+- **QA:** COURSE-QA-098–106, 158–165, 171–173. **Decisions:** COURSE-D11–D16, D25, D29, D40.
+
+### COURSE-F017 — Automatic Section enrollment (Option A adopted)
+**Evidence/status:** adopted target behavior, not a source claim of existing implementation. **Actor:** system automation.
+
+- Triggers: (1) PUBLISHED Course assigned to Section; (2) Course with audience links becomes PUBLISHED; (3) Student joins/becomes active in included Section; (4) Module 2 activates a Section inside DEPT_WIDE/GLOBAL.
+- Worker reconciles eligible Student-Course pairs and re-reads Course/Section/Student/College state before insertion.
+- Eligibility: Course PUBLISHED; scope includes active Section; active Student membership; same College; College ACTIVE; Module 3 entitlement positive.
+- Enforce unique (courseId, studentId). Replayed events/duplicate assignments are safe. Existing ENROLLED/COMPLETED records are not reset.
+- Later entrants automatically receive one CourseEnrollment. Section removal/transfer preserves enrollment/history; where Student leaves audience, retain history-only Course and stop new activity access.
+- No CourseEnrollment action changes Module 3 seat counts. Use durable transaction/outbox/retry and report unresolved failures.
+- **QA:** COURSE-QA-107–110, 158–165, 171–174. **Decisions:** COURSE-D11–D16, D25, D29, D40.
 
 ### COURSE-F018 — Student self-enrollment
-**Evidence/status:** RBAC platform matrix says View/Enroll; page/API matrix says View; Business Flow silent. **Actor:** Student if approved. **Entry:** My Courses/discovery action TBD. **Input:** Course ID; studentId derived from auth. **Candidate flow:** submit enrollment request → check permission, Course scope/status, seat eligibility → create enrollment → return result. **Rules:** no self-enrollment until RBAC conflict resolved; no arbitrary studentId. **Failure:** disabled enrollment, foreign Course, seat full, already enrolled → decision-based. **Acceptance:** blocked until D12/D13/D14/D25/D35. **QA:** COURSE-QA-111–115 (blocked).
+**Status:** disabled in v1.
+
+- Student Course permission is View only. The platform View/Enroll conflict is reconciled to Page/API matrices, which grant View only.
+- My Courses is populated through Option A automatic Section enrollment, not a self-service control or public catalogue.
+- Student enrollment requests, guessed IDs, forged studentId values, and cross-College attempts are denied without a CourseEnrollment write.
+- **QA:** COURSE-QA-111–115, 169–170. **Decisions:** COURSE-D12/D35.
 
 ### COURSE-F019 — Withdraw/remove/re-enroll
-**Evidence/status:** CourseEnrollment lacks status/withdrawnAt/repeat field. **Actors:** Student/staff/system according to future decision. **Input:** enrollmentId and action. **Flow:** authorize/ownership check → inspect history → apply approved lifecycle model → return result. **Rules:** hard-delete/soft-delete/status/repeat behavior not inferred; preserve submissions/progress. **Data:** update/delete/recreate only under approved model. **Failure:** completed course, prior submissions, seat changes, duplicate request, concurrent update → TBD. **Acceptance:** no historical work lost. **QA:** COURSE-QA-116–122. **Decisions:** D15/D16/D18/D25/D29/D30.
+**Actors:** HOD within assigned Department; SUPER_ADMIN platform-wide; Manager only for Students in the assigned Section where the action is exposed. Student cannot self-withdraw.
+
+- Staff withdrawal transitions ENROLLED to WITHDRAWN, requires a reason, sets server withdrawnAt, preserves the row and all academic history, and emits audit/notification events.
+- Repeated withdrawal is idempotent. COMPLETED is not reset; correction requires SUPER_ADMIN, reason and audit.
+- Repeat-course attempts are disabled in v1. Unique (courseId, studentId) prevents a second row; roster sync never resets completion.
+- Section changes/unlink do not delete or reset enrollment. Students leaving audience retain a history-only Course entry.
+- **QA:** COURSE-QA-116–122, 178. **Decisions:** COURSE-D15/D16/D18/D32/D33/D40.
 
 ### COURSE-F020 — View enrollment/completion state
 **Actors:** Student own; HOD/Manager scoped; SUPER_ADMIN. **Entry:** My Courses/Students. **Input:** Course/enrollment ID. **Flow:** authorize record → read enrolledAt/completedAt → display approved fields. **Rules:** timestamps do not define percentage progress or activity completion; Modules 6–9 own activity progress. **Failure:** no/foreign enrollment → deny/empty. **Acceptance:** no fabricated progress metrics. **QA:** COURSE-QA-123–127. **Decisions:** D16/D17/D18/D24/D37.
 
-### COURSE-F021 — Determine completion and set completedAt
-**Evidence/status:** completedAt field exists; criterion/trigger absent. **Actor:** system; manual override only if approved. **Preconditions:** completion formula and state machine approved. **Flow:** approved event → evaluate criteria → set completedAt → notify/certificate/report only if explicitly approved. **Rules:** do not assume all CourseProblems/Labs/Assessments/Contests count. **Failure:** criteria unmet, duplicate trigger, missing activity result, unauthorized override → no completion. **Acceptance:** only approved criterion sets timestamp; idempotent. **QA:** COURSE-QA-128–134 (decision blocked). **Decisions:** D17/D18/D37/D38.
+### COURSE-F021 — Determine Course completion and set completedAt
+**Policy:** HOD-verified completion in v1; no automatic completion formula.
+
+- HOD assigned to Course Department reviews the record and confirms completion with a reason. SUPER_ADMIN may correct with reason and audit. Manager/Student cannot mark completion.
+- On confirmation of an ENROLLED row, set status COMPLETED and completedAt using server time; emit Module 13/15 events.
+- Solving CourseProblems or completing Labs, Assessments, Contests, or CodeSubmissions does not automatically complete a Course. Modules 6–10 remain independent until a future cross-module policy exists.
+- Duplicate confirmation is idempotent and retains original completedAt.
+- **QA:** COURSE-QA-128–134, 175–177. **Decisions:** COURSE-D17/D18/D37/D38.
 
 ### COURSE-F022 — Search/filter/sort/paginate Courses
 **Actors:** permitted staff/Student. **Inputs:** query, status/scope/Department/Section/enrollment filter, sort/page (exact list TBD). **Flow:** validate parameters → apply trusted scope first → filter/sort/page → return results/count. **Rules:** query cannot widen scope or reveal hidden Course metadata. **Failure:** invalid filter/page/sort → API policy TBD. **Acceptance:** search is tenant-safe. **QA:** COURSE-QA-135–140. **Decision:** D24/D28.
 
 ### COURSE-F023 — Subscription/seat eligibility
-**Evidence/status:** Module 3 dependency; course policy absent. **Actor:** system. **Inputs:** College/Department/Student/subscription/seat context. **Preconditions:** Module 3 canonical rule approved. **Flow:** enrollment/access attempt → consult Module 3 entitlement → allow/deny according to authoritative response. **Rules:** do not calculate seat availability independently from overlapping College/Department/Subscription fields; subscription status meanings are not inferred. **Failure:** seat drift, entitlement outage, concurrent subscription change → Module 3/18 policy. **Acceptance:** single authoritative entitlement model. **QA:** COURSE-QA-141–146. **Decision:** COURSE-D25.
+**Owner:** Module 3 is authoritative for subscription entitlement and seat capacity.
+
+- Before automatic enrollment and active Student Course access, validate active Student membership, College ACTIVE state, and current Module 3 entitlement.
+- Active Student membership remains the seat trigger. CourseEnrollment must not consume, reserve, release, or recalculate seats or update usedSeats/purchasedSeats.
+- If entitlement is denied, no new enrollment or active access is granted. If unavailable, fail closed for new enrollment/access and retry reconciliation.
+- Existing enrollment history remains; access follows Module 3 policy, not a Module 4-invented grace rule.
+- **QA:** COURSE-QA-141–146, 171–173. **Decision:** COURSE-D25.
 
 ### COURSE-F024 — Read GroupCourseProblem
 **Evidence/status:** relation source-confirmed; Module 10 owns group semantics. **Actors:** staff/Student in permitted group; SUPER_ADMIN. **Input:** Group/Course context. **Flow:** authorize Course → validate Group membership/scope via Module 10 → read GroupCourseProblem → return permitted data. **Rules:** not same as CourseProblem; membership does not imply CourseEnrollment. **Failure:** foreign Group/non-member/invalid link → deny/filter. **Acceptance:** no cross-group disclosure. **QA:** COURSE-QA-147–151. **Decision:** COURSE-D39.
@@ -1005,37 +1010,118 @@ Module 17 owns canonical state transitions.
 | 18 | concurrency/partial failure/scope-change edge cases |
 
 ## 22. Decision log supplement
-COURSE-D01–D27 in the existing Section 10 remain open. Additional decisions:
 
-| ID | Question | Impact | Owner | Status |
-|---|---|---|---|---|
-| COURSE-D28 | Define Course status transition/access table. | Publication | Product/Security | Open |
-| COURSE-D29 | Decide Section assignment auto-enrollment/removal and idempotency. | Enrollment | Product/Architecture | Open |
-| COURSE-D30 | Define role/method enrollment permission matrix. | RBAC | Product/Security | Open |
-| COURSE-D31 | Define DEPT_WIDE/SECTION_ONLY/GLOBAL including College boundaries. | Tenant isolation | Product/Security | Open |
-| COURSE-D32 | Define scope/Department/Section change effects after enrollment/activity. | Access/history | Product/Architecture | Open |
-| COURSE-D33 | Define archive/delete/restore/retention/cascade. | Data integrity | Product/Architecture | Open |
-| COURSE-D34 | Define Problem association eligibility/order/requiredness/scheduling/history effects. | Course content | Product/Academic | Open |
-| COURSE-D35 | Resolve Student View/Enroll vs View-only RBAC conflict. | Student enrollment | Product/Security | Open |
-| COURSE-D36 | Define enrollment fields/export access by HOD/Manager/Student. | Privacy | Product/Security | Open |
-| COURSE-D37 | Define progress representation; schema only has enrolledAt/completedAt. | UX/schema | Product/Architecture | Open |
-| COURSE-D38 | Define completion criteria, automatic/manual, reversal/repeat/certificate effect. | Completion | Product/Academic | Open |
-| COURSE-D39 | Define GroupCourseProblem ownership and relation to CourseProblem. | Group integration | Product/Architecture | Open |
-| COURSE-D40 | Define concurrent Course/Section/Problem edits during enrollment/activity. | Integrity | Architecture/QA | Open |
+The complete adopted decision set is COURSE-D01–COURSE-D40 in ADOPTED-DECISIONS.md. Historical open/TBD wording retained in source-reconciliation passages is superseded by the normative baseline in Section 24 and does not represent pending product choices.
 
 ## 23. Review checklist
-- [ ] COURSE-F001–F025 reviewed and source-traced.
-- [ ] HOD/SUPER_ADMIN/Manager permissions approved.
-- [ ] Finance Team Course view route resolved/deferred.
-- [ ] Student self-enrollment conflict resolved.
-- [ ] Scope meanings and cross-College behavior approved.
-- [ ] CourseSection vs CourseEnrollment relationship explicit.
-- [ ] Status transitions/visibility approved.
-- [ ] CourseProblem add/remove and historical effects defined.
-- [ ] Enrollment, withdrawal, repeat and seat triggers defined.
-- [ ] Completion formula and completedAt behavior approved.
-- [ ] Module 3 entitlement and Module 10 group integration aligned.
-- [ ] QA includes expected results; decision-blocked tests marked.
-- [ ] No source conflict/recommendation silently becomes approved behavior.
+
+- [x] COURSE-F001–F025 have adopted behavior and traceable QA coverage.
+- [x] Role and College/Department/Section boundaries are explicit.
+- [x] Student self-enrollment conflict resolved to View only in v1.
+- [x] DEPT_WIDE, SECTION_ONLY, and GLOBAL scopes are defined and College-isolated.
+- [x] CourseSection is audience; CourseEnrollment is individual Student participation.
+- [x] Option A includes later Section entrants and idempotent replay.
+- [x] Publication, archive, restoration, and history retention are explicit.
+- [x] CourseProblem and GroupCourseProblem remain distinct.
+- [x] Enrollment lifecycle, repeat prohibition, and HOD-verified completion are explicit.
+- [x] Module 3 seat trigger remains active Student membership only.
+- [x] Module 13 notification and Module 15 audit integration are assigned.
+- [x] QA suite has 180 unique target cases; execution remains pending.
+- [ ] Schema migration and canonical RBAC changes implemented.
+- [ ] Module 2 Section/roster events and audience reconciliation implemented.
+- [ ] Enrollment outbox/retry/idempotency and Module 3 entitlement integrated.
+- [ ] Modules 5–10, 13, 15, 17, and 18 contracts integrated.
+- [ ] QA execution, security review, and product sign-off complete.
+
+**Review gate:** Module 4 target product baseline adopted; implementation-ready only after engineering gates in Section 26 are closed.
 
 **Review gate:** Module 4 only. GitHub commit means document versioned, not target behavior approved or implementation-ready.
+
+## 24. Adopted target behavior — normative v1 baseline
+
+This section is authoritative where earlier source-based passages retain TBD/conditional language.
+
+### 24.1 Roles and authorization
+SUPER_ADMIN has platform-wide Course administration. HOD has full administration within assigned College + Department, including publish/archive/restore, Section/Problem association, Department enrollment management and completion verification. Manager may create/update SECTION_ONLY Courses and manage only its assigned Section's audience/Problem links; it cannot widen scope, publish, archive, restore or mark completion. FINANCE_TEAM has assigned-College Course metadata View only, with no enrollment/progress data and no dedicated page requirement. STUDENT has View only, own enrolled Courses and own enrollment; no self-enrollment or self-withdrawal. Every API/search/export/direct ID enforces server-resolved scope; Course.collegeId is the hard tenant boundary.
+
+### 24.2 Metadata
+title required, trimmed, non-empty, max 255. code required, trimmed, uppercase-normalized, max 50, unique case-insensitively within College; archived codes stay reserved. description optional. Creator, College, Department and timestamps are server controlled. GLOBAL Courses retain the owning Department for audit but broaden audience only within their College. No duration, semester, term, prerequisites, credits, instructor or public catalog fields are assumed.
+
+### 24.3 Course scope and audience
+| Scope | Meaning | Audience |
+|---|---|---|
+| SECTION_ONLY | Explicit Section(s) only | CourseSection links required; at least one before publish |
+| DEPT_WIDE | All active Sections in owning Department | Materialize current links and reconcile new/activated Sections |
+| GLOBAL | All active Sections in owning College across Departments | Materialize current links and reconcile new/activated Sections |
+
+GLOBAL is never public or cross-College. DRAFT may have audience links prepared but creates no Student enrollments until published. Module 2 Section creation/activation must reconcile DEPT_WIDE/GLOBAL audiences. Scope/Department/Section changes require HOD/SUPER_ADMIN, impact preview and audit. Existing enrollments are retained; Students outside the changed audience receive history-only Course access.
+
+### 24.4 Option A — automatic CourseEnrollment
+**Adopted model:** assigning a PUBLISHED Course to a Section automatically creates CourseEnrollment for every eligible active Student in that Section. If assigned while DRAFT, enrollment occurs when it becomes PUBLISHED. A Student who later joins/becomes active in an included Section is automatically enrolled in every applicable PUBLISHED Course.
+
+Eligibility is rechecked immediately before insert: Course PUBLISHED; Section inside scope and active; active Student membership; same College; College ACTIVE; positive Module 3 entitlement. No ordinary manual staff enrollment or Student self-enrollment route exists in v1. Student identity, enrollmentSource and timestamps are server-generated. Unique (courseId, studentId) makes replays safe; existing ENROLLED/COMPLETED rows are not reset. WITHDRAWN is not silently reactivated. Use durable outbox/retry and revalidate authoritative data. Section unlink stops future enrollment but never deletes existing enrollment/history.
+
+### 24.5 Enrollment lifecycle
+v1 statuses: ENROLLED, COMPLETED, WITHDRAWN. One row per Student + Course; repeats disabled. Student cannot self-withdraw. HOD can withdraw within Department, SUPER_ADMIN globally, and Manager only within its assigned Section where enabled. Withdrawal requires reason, sets withdrawnAt, preserves history and is audited. COMPLETED is not reset; corrections require SUPER_ADMIN, reason and audit. Course archive, unlink, transfer or scope changes never cascade-delete enrollments.
+
+### 24.6 Publication, archive, restore and access
+| Status | Staff | Student | Rule |
+|---|---|---|---|
+| DRAFT | Authorized staff | Hidden | No Student enrollment |
+| PUBLISHED | Authorized staff | Eligible enrolled Students | Option A reconciliation |
+| ARCHIVED | Authorized staff | Existing enrollments as read-only history | No new enrollment/activity |
+
+Transitions: create as DRAFT; DRAFT→PUBLISHED; PUBLISHED→DRAFT; DRAFT/PUBLISHED→ARCHIVED; ARCHIVED→DRAFT. Only HOD/SUPER_ADMIN. Publish reconciles enrollment; unpublish retains enrollment but removes active content access; archive retains history and blocks new enrollment/activity; restore returns to DRAFT and does not auto-publish. No hard delete or cascade.
+
+### 24.7 CourseProblem and GroupCourseProblem
+CourseProblem is unordered; no order, weight, required/optional, due date, schedule or completion contribution in v1. Attach requires same-College Problem and Module 5 scope/status permission. Unlink removes association only and preserves Problem/submissions. Module 10 owns GroupCourseProblem writes and Group permission; Module 4 reads only after Module 10 authorization. Group-only links are not CourseProblem and do not create CourseEnrollment.
+
+### 24.8 Completion and progress
+HOD manually verifies completion; SUPER_ADMIN corrects with reason/audit; Manager and Student cannot mark completion. Confirmation sets status COMPLETED and server completedAt. Duplicate confirmation is idempotent. No automatic all-Problems/Labs/Assessments/Contests formula. Display statuses and timestamps only; never fabricate percentage progress.
+
+### 24.9 Lists, notifications and audit
+Staff search title/code and filter status/scope/Department/Section. Student sees only own enrolled Courses. Default sort createdAt descending then stable ID; default page 20/max 100. Module 13 owns delivery; emit Course lifecycle, audience assignment/removal, automatic enrollment, withdrawal and completion events. Module 15 owns audit; capture actor/service, Course/Student/Section, tenant scope, event/idempotency key, timestamp and reason where relevant.
+
+### 24.10 Module 3 seat contract
+Module 3 solely owns entitlement and seat capacity. Active Student membership is the seat trigger. CourseEnrollment never consumes/reserves/releases/recalculates seats or updates usedSeats/purchasedSeats. Validate entitlement and College ACTIVE before enrollment/active Course access. Denial creates no enrollment/access; entitlement outage fails closed and retries. Keep existing history.
+
+## 25. Target schema delta
+
+The following are required proposed changes; they are not present in the reconstructed schema as fetched.
+
+### 25.1 Course
+Keep current fields. Keep departmentId required as owning Department even for GLOBAL; audience spans Departments only within collegeId. Add case-insensitive unique (collegeId, normalizedCode) or normalized uppercase code + unique (collegeId, code) index.
+
+### 25.2 CourseSection
+Keep courseId, sectionId, createdAt. Add unique (courseId, sectionId) and audience reconciliation indexes. Treat links as Course audience/availability, not individual Student enrollment. Removal stops future auto-enrollment and is audited.
+
+### 25.3 CourseEnrollment
+Current fields are id, courseId, studentId, enrolledAt, completedAt. Add:
+| Proposed field/constraint | Purpose |
+|---|---|
+| status enum ENROLLED/COMPLETED/WITHDRAWN | Explicit lifecycle |
+| withdrawnAt nullable timestamp | Withdrawal time |
+| withdrawalReason nullable text | Required for WITHDRAWN |
+| enrollmentSource enum/string | SECTION_ASSIGNMENT, COURSE_PUBLISHED, STUDENT_JOINED_SECTION, SECTION_ACTIVATED, RECONCILIATION |
+| createdById nullable actor/service reference | Human/system traceability |
+| unique (courseId, studentId) | One v1 record per Student + Course |
+| indexes (studentId, status), (courseId, status) | My Courses and roster reads |
+
+COMPLETED and completedAt update atomically. WITHDRAWN requires withdrawnAt and reason. ENROLLED requires completedAt null. No attemptNumber because repeats are disabled.
+
+### 25.4 CourseProblem / GroupCourseProblem
+Add unique (courseId, problemId) for CourseProblem. Module 10 owns GroupCourseProblem write/uniqueness contract. No order/weight/requiredness/scheduling fields in v1.
+
+### 25.5 Cross-module event requirements
+Module 2 provides Section and roster lifecycle events/reconciliation hook. Module 1 provides trusted active Student membership. Module 3 provides entitlement validation without seat increments. Enrollment automation requires transactional outbox or equivalent durable retry and Student-Course idempotency. Database uniqueness is required despite application checks.
+
+## 26. Engineering implementation gates (not product decisions)
+1. Migrate CourseEnrollment lifecycle fields/enums, unique constraints and indexes; backfill old rows to ENROLLED unless completedAt is reliably set, then COMPLETED.
+2. Update canonical RBAC/page/API matrices: Student View only; Manager SECTION_ONLY own-Section Create/Update; Finance metadata-only View; HOD/SUPER_ADMIN scope.
+3. Implement ContentScope resolver and audience materialization; integrate Module 2 Section/roster events.
+4. Implement Option A worker, outbox, idempotent retry/reconciliation and Module 3 entitlement.
+5. Implement Course lifecycle/history-only visibility, CourseProblem rules, and Modules 5–10 permissions.
+6. Integrate Module 13 notifications, Module 15 audit, Module 17 transitions and Module 18 concurrency/failure handling.
+7. Execute 180 QA cases, migration validation and security review before release.
+
+**Legacy boundary:** reviewed legacy Module 04 documents describe CourseRoom/ordered Rooms, Syllabus/overlays, Learning Paths/PathProgress and no CourseEnrollment. Those are historical only; they are not imported into the target module.
