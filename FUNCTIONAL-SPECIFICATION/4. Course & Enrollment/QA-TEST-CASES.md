@@ -57,7 +57,7 @@
 | COURSE-QA-039 | Invalid status transition | Current/target state forbidden by approved state machine | Request transition | Rejected; state unchanged | F005; Module 17 |
 | COURSE-QA-040 | Set DEPT_WIDE scope | Course admin; scope policy approved | Save scope | Stored value and access follow approved DEPT_WIDE definition | F006; COURSE-D31 |
 | COURSE-QA-041 | Set SECTION_ONLY without Section link | SECTION_ONLY policy approved | Save/publish | Behavior follows approved required-assignment rule | F006/F007; COURSE-D09/COURSE-D31 |
-| COURSE-QA-042 | GLOBAL scope authority and College boundary | HOD-A in Department A1; Course owned by College A; College B exists | HOD attempts to set GLOBAL; SUPER_ADMIN sets GLOBAL and query College B | HOD cannot widen to GLOBAL; SUPER_ADMIN may set GLOBAL within College A only; College B remains excluded | F006; COURSE-D07/D08/D31 |
+| COURSE-QA-042 | GLOBAL scope authority and College boundary | HOD-A in Department A1; Course owned by College A; College B exists | HOD attempts to set GLOBAL; SUPER_ADMIN sets GLOBAL and query College B | HOD cannot widen to GLOBAL; SUPER_ADMIN may set GLOBAL within College A only; College B remains excluded | F006; COURSE-D07/COURSE-D08/COURSE-D31 |
 | COURSE-QA-043 | Manager sets broader scope than assigned | Manager assigned one Section | Request DEPT_WIDE/GLOBAL | Denied or constrained by approved scope policy | F006; RBAC |
 | COURSE-QA-044 | Change scope after Student enrollment | Course has enrolled Students | Update scope | Existing access follows approved impact policy; no silent history loss | F006/F025; COURSE-D32 |
 | COURSE-QA-045 | Invalid scope string via API | Course update | Submit unsupported enum | Reject | F006 |
