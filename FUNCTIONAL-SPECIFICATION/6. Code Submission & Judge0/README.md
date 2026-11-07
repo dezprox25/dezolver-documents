@@ -1,11 +1,11 @@
 # 6. Code Submission & Judge0
 
 **Document type:** Functional Specification  
-**Version:** 0.2 — Detailed draft aligned to Functional Specification Standard v1.0  
-**Status:** Detailed draft — ready for product/architecture/security review; target behavior remains unapproved  
+**Version:** 1.0 — Adopted target baseline  
+**Status:** Product decisions adopted (SUB-D01–SUB-D28); schema and engineering gates remain  
 **Scope:** Student code submission, DEZOLVER backend submission handling, Judge0 integration boundary, submission records, and result retrieval. Detailed test-case evaluation and scoring belong to Module 7 and relevant academic modules.
 
-> This draft uses Business Flow v2, Page-to-DB Mapping v2, and the schema reconstruction. Source-confirmed fields and flow are distinguished from derived safeguards and unresolved decisions. Judge0 API details are not assumed where the source does not define them.
+> This baseline reconciles Business Flow (original/v2), Page–DB Mapping (original/v2), RBAC, conceptual schema, legacy audit observations, Module 5 ProblemVersion/language/resource policy, Module 7 evaluation requirements and official Judge0 CE API documentation. Sections 25–29 and ADOPTED-DECISIONS.md are normative.
 
 ## 1. Purpose
 
@@ -49,7 +49,7 @@ This module focuses on submission handling and the Judge0 integration boundary. 
 
 ## 3. Source documents and interpretation
 
-### 3.1 Business Flow v2
+### 3.1 Business Flow (original and v2)
 
 The overall flow shows:
 - Student accesses a Course and Problem.
@@ -66,7 +66,7 @@ The Student flow also shows submissions in:
 
 The source diagram does not specify Judge0 API endpoints, request/response schema, synchronous/asynchronous behavior, retry strategy, or error mapping.
 
-### 3.2 Page-to-DB Mapping v2
+### 3.2 Page-to-DB Mapping (original and v2)
 
 | Role | Page/workflow | Mapped entities include |
 |---|---|---|
@@ -118,7 +118,7 @@ The schema defines JudgeVerdict:
 - RUNTIME_ERROR
 - COMPILATION_ERROR
 
-No additional verdicts or fields are assumed in this draft.
+No additional source enum values are assumed. Target processing status is separate from JudgeVerdict; see Sections 25–29.
 
 ## 4. Roles and submission access
 
@@ -140,7 +140,7 @@ No additional verdicts or fields are assumed in this draft.
 - Client must not alter another user's submission by changing a submission ID.
 - Judge0 credentials/configuration must remain server-side; the client must not directly invoke Judge0 with privileged credentials.
 
-**TBD:** whether Students may resubmit freely, whether staff may run submissions on behalf of Students, and exact staff rights to source code and execution output.
+**Adopted target behavior:** formal submissions are Student-owned; HOD/Manager cannot submit on behalf of Students; staff see scoped summaries only; only the Student owner and SUPER_ADMIN can view source code in v1.
 
 ## 5. Functional requirements
 
@@ -482,7 +482,7 @@ These are derived requirements; implementation details remain TBD.
 
 ---
 
-## 9. Source gaps, conflicts, and risks
+## 9. Original source gaps, conflicts, and risks (superseded by adopted decisions)
 
 ### 9.1 Judge0 integration contract is absent
 
@@ -534,59 +534,33 @@ Schema stores stdout, stderr, and failedTestCaseIndex.
 
 ---
 
-## 10. Decisions required before finalization
+## 10. Adopted product decision register
 
-| ID | Decision | Why it matters |
-|---|---|---|
-| SUB-D01 | Confirm Judge0 deployment (hosted/self-hosted) and environments. | Infrastructure |
-| SUB-D02 | Specify Judge0 API endpoints, authentication, request/response schema. | Integration |
-| SUB-D03 | Choose synchronous/asynchronous execution and polling/callback/result-update mechanism. | Lifecycle |
-| SUB-D04 | Define DEZOLVER language identifiers and mapping to Judge0 language/version IDs. | Compatibility |
-| SUB-D05 | Define CodeSubmission creation timing and initial verdict. | Persistence |
-| SUB-D06 | Define judge0Token nullability, uniqueness, expiration, and sensitivity. | Correlation |
-| SUB-D07 | Define context association fields/tables for Course, Lab, Assessment, Contest, Practice. | Attribution |
-| SUB-D08 | Define submission validation and code/request size limits. | API/security |
-| SUB-D09 | Define per-Student/activity submission limits, rate limits, and concurrency. | Capacity/fairness |
-| SUB-D10 | Define duplicate submission and idempotency behavior. | Reliability |
-| SUB-D11 | Define retry policy for transient backend/Judge0 errors. | Reliability |
-| SUB-D12 | Define Judge0 timeout, queue timeout, and result retrieval timeout. | Reliability |
-| SUB-D13 | Define mapping of Judge0 statuses/verdicts into JudgeVerdict. | Verdict semantics |
-| SUB-D14 | Decide how infrastructure failures are represented without penalizing Student code. | Correctness |
-| SUB-D15 | Define executionTimeMs, memoryUsageKb, failedTestCaseIndex semantics/units. | Result consistency |
-| SUB-D16 | Define stdout/stderr visibility, truncation, sanitization, and retention. | Privacy/security |
-| SUB-D17 | Define Student/HOD/Manager source-code and result access rights. | RBAC |
-| SUB-D18 | Define whether Students can cancel pending/running submissions. | UX/processing |
-| SUB-D19 | Define submission deletion/retention and behavior after Student deactivation. | Data lifecycle |
-| SUB-D20 | Define rejudge behavior and overwrite vs new record. | History |
-| SUB-D21 | Define one Judge0 job per submission vs evaluation batch. | Architecture |
-| SUB-D22 | Define whether Judge0 runs individual tests or DEZOLVER orchestrates them. | Module 7 boundary |
-| SUB-D23 | Define source code/output encryption, redaction, and retention. | Data security |
-| SUB-D24 | Define audit events for submit, handoff, result update, rejudge, and staff access (Module 15). | Audit |
-| SUB-D25 | Define notification/status refresh behavior for completed submissions (Module 13). | UX/integration |
-
----
+All SUB-D01–SUB-D28 are adopted as the v1 target baseline. The complete decision register is ADOPTED-DECISIONS.md. Option B is canonical: one CodeSubmission parent, one SubmissionRun per execution generation and one JudgeRun per testcase execution. No product decisions remain open; schema migration, runtime implementation, integrations, deployed Judge0 verification and QA execution remain engineering work.
 
 ## 11. Acceptance checklist
 
-Code Submission & Judge0 is implementation-ready when:
-- [ ] Judge0 deployment and API contract are documented.
-- [ ] Submission creation timing and initial verdict are confirmed.
-- [ ] Language identifiers and Judge0 mapping are finalized.
-- [ ] Submission context is linked to Course/Lab/Assessment/Contest/Practice.
-- [ ] Eligibility checks are defined per activity type.
-- [ ] Judge0 token/reference correlation is reliable.
-- [ ] Pending/running/completed lifecycle and timestamps are agreed.
-- [ ] Judge0 status/verdict mapping is approved.
-- [ ] Infrastructure failures do not incorrectly penalize Student code.
-- [ ] Retry, idempotency, rate-limit, and concurrency behavior is defined.
-- [ ] Execution metadata units and failedTestCaseIndex semantics are agreed.
-- [ ] Student/staff result visibility and source-code permissions are defined.
-- [ ] Hidden TestCase information cannot leak through result APIs.
-- [ ] Rejudge and historical submission behavior is approved.
-- [ ] Module 7 evaluation and Modules 8–11 academic context interfaces are agreed.
-- [ ] Audit and notification requirements are coordinated.
+**Product policy — adopted**
+- [x] Canonical CodeSubmission + SubmissionRun + testcase-level JudgeRun architecture.
+- [x] Five activity contexts and one context per formal submission.
+- [x] Server-derived Student/tenant/ProblemVersion and Module 5 eligibility.
+- [x] Async outbox/worker flow and HTTP 202 acceptance semantics.
+- [x] Language mapping and pinned ProblemVersion runtime limits.
+- [x] Idempotency, attempt numbering, rate limits and tenant fairness.
+- [x] Judge0 batch/token correlation, polling/retry and infrastructure-failure handling.
+- [x] Processing lifecycle separate from JudgeVerdict.
+- [x] Role-based source/result access, hidden-case masking and event security.
+- [x] Rejudge, cancellation, scratchpad and retention policies.
+- [x] Module 7/8/9/11, audit and notification contracts.
 
----
+**Engineering/release — pending**
+- [ ] Add parent context/version/attempt/idempotency fields and processing status.
+- [ ] Add SubmissionRun, JudgeRun, outbox and idempotency persistence.
+- [ ] Implement transaction-safe attempt reservation and duplicate-safe dispatch.
+- [ ] Implement/pin Judge0 adapter and deployment contract tests.
+- [ ] Integrate Module 7 version-pinned evaluation and activity owners.
+- [ ] Integrate Module 17/18 state/recovery, Module 13 notifications and Module 15 audit.
+- [ ] Execute 180 QA cases, load/security review and release sign-off.
 
 ## 12. Dependencies and interfaces
 
@@ -618,7 +592,7 @@ Original Drive PDFs:
 - [Page - DB Mapping v2.pdf](https://drive.google.com/file/d/1UdzowkDPP85PNI0-GQ2k4cEmwIIAZYcw/view)
 - [scheema.pdf](https://drive.google.com/file/d/10_LGfTsQ2eGmbJM5tQE9Pkmlwhft1lAI/view)
 
-**Review gate (superseded by the later expansion):** The original source-based draft paused before Module 7. The user has since explicitly authorized Modules 6 and 7 to be upgraded together. Both detailed drafts are now repository-included and await Product/Architecture/Security review; unresolved target decisions remain open.
+**Historical source-draft note:** source gaps are preserved as evidence. The product owner adopted SUB-D01–SUB-D28; see Sections 25–29 and ADOPTED-DECISIONS.md.
 
 
 ---
@@ -629,14 +603,14 @@ Original Drive PDFs:
 
 ## 14. Evidence and specification status
 
-- **Source-confirmed:** stated in Business Flow, Page-to-DB Mapping, RBAC, or conceptual schema.
-- **Legacy-verified (audit-reported):** described by the supplied source-code forensic investigation. The implementation is not re-inspected as part of this documentation task.
-- **Derived:** required safeguard or workflow implication from confirmed source facts.
-- **Target requirement:** not approved unless explicitly noted as such by the product owner.
-- **Recommendation:** proposal only.
-- **TBD / Decision required:** source gaps or conflicts requiring product/architecture/security approval.
+- **Source-confirmed:** stated in Business Flow, Page–DB Mapping, RBAC or conceptual schema.
+- **Legacy audit-reported:** described in the supplied forensic investigation for a specific legacy snapshot; not runtime-reverified in this task.
+- **External API verified:** confirmed in official Judge0 CE API documentation; the deployed instance version/configuration still requires pinning and contract tests.
+- **Derived safeguard:** security/integrity rule required by the source architecture.
+- **Adopted target behavior:** resolved product policy SUB-D01–SUB-D28; normative in Sections 25–29 and ADOPTED-DECISIONS.md.
+- **Engineering gate:** schema migration, implementation, operational configuration, cross-module integration or QA execution not yet complete.
 
-The forensic report covers a specific legacy v2 code snapshot. Its findings may not describe the intended DEZOLVER target release. Do not equate legacy code behavior with target requirements.
+Earlier sections preserve source analysis. Where source/TBD notes conflict with adopted product policy, Sections 25–29 and ADOPTED-DECISIONS.md take precedence. The legacy Assessment-only model, hard-coded numeric language IDs, polling constants, queue quotas and retry settings are not silently imported.
 
 ## 15. Terminology and ownership boundaries
 
@@ -1259,55 +1233,117 @@ The supplied **DEZOLVER Code Execution and Evaluation Deep Dive** reports the fo
 
 ## 23. Decision log status
 
-SUB-D01–SUB-D28 are **Open** unless explicitly approved by the product owner. This documentation commit does not resolve them.
+SUB-D01–SUB-D28 are adopted. There are no open product decisions in Module 6. Full decision register: ADOPTED-DECISIONS.md.
 
-| Decision | Question | Owner | Status |
-|---|---|---|---|
-| SUB-D01 | Judge0 deployment/environment | Architecture/DevOps | Open |
-| SUB-D02 | Judge0 API contract/auth/version | Architecture | Open |
-| SUB-D03 | sync/async/poll/callback delivery | Architecture/Product | Open |
-| SUB-D04 | canonical language IDs and versions | Product/Architecture | Open |
-| SUB-D05 | submission record creation + initial state | Product/Architecture | Open |
-| SUB-D06 | CodeSubmission vs legacy Submission schema; token cardinality | Architecture/Data | Open |
-| SUB-D07 | context fields/association for Course/Lab/Assessment/Contest/Practice | Product/Data | Open |
-| SUB-D08 | code payload max size/validation | Product/Security | Open |
-| SUB-D09 | attempt, rate, concurrency, fairness limits | Product/Architecture | Open |
-| SUB-D10 | idempotency keys/replay/duplicate request | Architecture | Open |
-| SUB-D11 | queue/Judge0 retry policy and duplicate external job prevention | Architecture/Ops | Open |
-| SUB-D12 | Judge0 and worker timeouts, stuck submissions | Architecture/Ops | Open |
-| SUB-D13 | native Judge0 status → DEZOLVER verdict mapping | Product/Architecture | Open |
-| SUB-D14 | infrastructure error status separate from student-code verdict | Product/Architecture | Open |
-| SUB-D15 | timestamps/runtime/memory/index semantics | Product/Architecture | Open |
-| SUB-D16 | stdout/stderr/compiler output masking, limits, retention | Security/Product | Open |
-| SUB-D17 | Student/HOD/Manager/SUPER_ADMIN raw code/result permissions | Security/Product | Open |
-| SUB-D18 | cancellation behavior and attempt impact | Product/Architecture | Open |
-| SUB-D19 | history retention/deletion/deactivation behavior | Product/Privacy | Open |
-| SUB-D20 | rerun/rejudge roles, reason, history, score overwrite | Product/Architecture | Open |
-| SUB-D21 | Run Code/custom stdin vs formal Submit | Product | Open |
-| SUB-D22 | tenant/user queue/rate/fairness quotas | Product/Ops | Open |
-| SUB-D23 | source code/raw execution artifact protection | Security/Privacy | Open |
-| SUB-D24 | canonical grading event/outbox contract | Architecture | Open |
-| SUB-D25 | push/poll/notification behavior | Product/Architecture | Open |
-| SUB-D26 | code request schema and response/API contract | Product/Architecture | Open |
-| SUB-D27 | academic activity context integration and permission | Product/Module owners | Open |
-| SUB-D28 | attempt numbering and race-safe reservation | Product/Data | Open |
+| Workstream | Status | Remaining work |
+|---|---|---|
+| Product policy | Adopted | None |
+| Canonical persistence | Adopted | Schema migration |
+| Judge0 adapter | Adopted target contract | Pin/test deployed CE version and configuration |
+| Processing lifecycle | Adopted | Module 17 integration |
+| Evaluation | Defined | Module 7 implementation |
+| Activity contexts | Defined | Modules 4/8/9/10/11 integration |
+| Security/retention | Policy adopted | Implementation/privacy validation |
+| QA | 180 cases defined | Execute and attach evidence |
 
 ## 24. Review and readiness checklist
 
-- [ ] SUBMIT-F001–F025 reviewed by Product, Architecture, Security, and relevant academic module owners.
-- [ ] RBAC action/scope/ownership rules approved, including field-level raw code/output access.
-- [ ] Practice/Course/Lab/Assessment/Contest submission context is confirmed and represented.
-- [ ] Conceptual CodeSubmission and legacy assessment.submissions schema conflict resolved.
-- [ ] Judge0 token cardinality and correlation model resolved.
-- [ ] Judge0 deployment, API contract, authentication, language IDs, and versions approved.
-- [ ] Problem language/resource limits are applied consistently (Module 5).
-- [ ] Attempt/resubmission/rerun rules approved for each context.
-- [ ] Idempotency and queue retry behavior prevent accidental duplicate attempts/executions.
-- [ ] Status/verdict lifecycle and infrastructure failure representation approved (Module 17).
-- [ ] Code size, rate limits, concurrency, fairness, cancellation, and custom-run scope approved.
-- [ ] Student/staff result visibility, hidden-data masking, output limits, and retention approved.
-- [ ] Event/outbox/notification contracts align with Modules 8–11/13/15.
-- [ ] QA covers role, scope, duplicate, queue, Judge0, security, and failure scenarios.
-- [ ] Legacy findings, derived safeguards, recommendations, and target TBDs remain distinct.
+**Product policy — complete**
+- [x] SUB-D01–SUB-D28 adopted.
+- [x] Option B persistence, contexts, version, attempts and language contracts defined.
+- [x] Async delivery, idempotency, retry, polling and failure behavior defined.
+- [x] Role/source/result permissions, rejudge and retention defined.
+- [x] Module 7 and activity integration contracts defined.
 
-**Review gate:** Module 6 detailed draft is ready for Product/Architecture/Security review. Module 7 is being upgraded in parallel under the user's explicit instruction. GitHub inclusion versions documentation; it does not approve unresolved target behavior.
+**Engineering/release — pending**
+- [ ] Persist parent/run/child schema and backfill historical rows.
+- [ ] Implement transactional outbox, idempotency and race-safe attempts.
+- [ ] Deploy/pin Judge0 CE instance and contract-test its API/status mapping.
+- [ ] Implement worker, batch/token correlation, retry/polling and recovery.
+- [ ] Implement DTO masking, encryption, audit and retention.
+- [ ] Integrate Modules 4/7/8/9/10/11/13/15/17/18.
+- [ ] Execute 180 QA cases, load/security review and release sign-off.
+
+## 25. Adopted target architecture — Option B
+
+CodeSubmission is one Student formal submission; SubmissionRun is one execution generation; JudgeRun is one testcase execution with its own Judge0 token. Run 1 is INITIAL. Rejudge creates a new REJUDGE run and preserves earlier results. Parent-level judge0Token is deprecated.
+
+### 25.1 Activity context
+Exactly one contextType: PRACTICE, COURSE, LAB, ASSESSMENT or CONTEST. PRACTICE contextId is null and Module 5 scope applies. Course is validated by Module 4; Lab by Module 8 (+ Module 10 group membership where required); Assessment by Module 9; Contest by Module 11. Owner module validates Problem attachment and Student eligibility.
+
+### 25.2 Submit API
+POST /api/v1/submissions body: problemId, contextType, contextId (null only for PRACTICE), canonical language key and code. Require Idempotency-Key. Do not accept client Student/tenant/org/version/Judge0 IDs/runtime limits/official testcase data/compiler options.
+
+Return HTTP 202 only after parent + initial run + attempt + outbox transaction commits. Response identifies submissionId, QUEUED processingStatus, runNumber=1 and statusUrl. 202 means queued, not Accepted verdict. GET detail/history use safe DTOs. Rejudge is SUPER_ADMIN-only and reason-required. These are target contracts, not claims that code is implemented.
+
+### 25.3 Function-level adopted behavior
+The existing SUBMIT-F001–SUBMIT-F025 specifications are governed by this target policy: authenticate Student; validate Problem/activity/context/language; atomically create CodeSubmission + INITIAL SubmissionRun + attempt + outbox; require Idempotency-Key; dispatch ID-only async jobs; pin ProblemVersion/language/runtime; create one JudgeRun/token per testcase; correlate by token and stable testcase ID; separate processingStatus from JudgeVerdict; do not map infrastructure failure to Wrong Answer; read persisted results; scope history/staff; rejudge as new run; disable Student cancellation/scratchpad v1; enforce rate/fairness; mask hidden fields; emit durable deduplicated events; preserve academic history.
+
+### 25.4 Processing status
+| Status | Meaning |
+|---|---|
+| QUEUED | Durable submit accepted; waiting for worker/Judge0 |
+| RUNNING | Worker started or JudgeRuns processing |
+| COMPLETED | Module 7 persisted complete result |
+| FAILED | Infrastructure/configuration/dispatch/evaluation failure |
+| CANCELLED | Privileged pre-handoff cancellation only |
+
+JudgeVerdict stays null until Module 7 completes all required testcases. Module 17 owns the shared state machine. Infrastructure failure is never Wrong Answer.
+
+### 25.5 Attempts and idempotency
+- Attempt number is atomic per Student + Problem + contextType + contextId.
+- PRACTICE/COURSE have no fixed product cap; LAB/ASSESSMENT/CONTEST caps remain with Modules 8/9/11.
+- Idempotency-Key required, 16–128 printable ASCII chars, Student/context scoped.
+- Same key+same payload replays for 24h minimum; changed payload returns 409. New key creates intentional submission; rejudge does not increment attempt.
+
+### 25.6 Target schema delta
+**CodeSubmission:** id, problemId, problemVersionId, studentId, contextType/contextId, canonical language, code, attemptNumber, processingStatus, nullable verdict, latestRunId, timestamps, idempotencyKey/requestHash. Enforce unique attempt and idempotency scopes.
+
+**SubmissionRun:** id, submissionId, runNumber, runType INITIAL/REJUDGE, problemVersionId, processingStatus, verdict/score, passed count, max runtime/memory, requestedById/reason, timestamps and error category. Unique submissionId+runNumber.
+
+**JudgeRun:** id, submissionRunId, problemVersionTestCaseId, orderIndex, judge0Token, dispatchGeneration, native/result status, runtime/memory, protected stdout/stderr/compile output/exit metadata and timestamps. Unique run+testcase+dispatch generation and unique token.
+
+**OutboxEvent/IdempotencyRecord:** committed with accepted parent/run/attempt; queue carries IDs/correlation only. Backfill old single-token rows only if testcase mapping is proven; never fabricate.
+
+### 25.7 Judge0 CE adapter
+- Backend/worker only; environment-specific JUDGE0_BASE_URL and secret-managed authentication. Official CE docs identify X-Auth-Token as configurable default.
+- CE endpoints: async POST /submissions; batch POST /submissions/batch?base64_encoded=true; GET /submissions/{token}; batch GET /submissions/batch?tokens=... . Each returned token maps to one JudgeRun; preserve per-row validation errors.
+- Do not use wait=true for formal Submit; documentation warns it does not scale. One request per testcase; batch is transport optimization, not parallelism guarantee.
+- Use Base64 for source_code/stdin/expected_output where required; decode outputs only server-side.
+- Poll deadline default 120s configurable; polling 1s/2s/4s/max 5s with jitter. Up to 3 pre-handoff retries. After token persistence poll/reconcile only. Ambiguous POST outcome/no token is dispatch-uncertain; no blind repost.
+- Verify deployed /about or /version, /languages, /statuses and /config_info; pin version/config and contract-test.
+- Official CE docs describe v1.13.1 status IDs: 1 In Queue, 2 Processing, 3 Accepted, 4 Wrong Answer, 5 TLE, 6 Compilation Error, 7–12 Runtime Error variants, 13 Internal Error, 14 Exec Format Error. Query deployed /statuses. Published list has no dedicated MLE; do not infer MLE from generic runtime error.
+- Judge0 CPU time is seconds and memory is kilobytes. Convert ProblemVersion timeLimitMs to seconds. Interpret Module 5 memoryLimitMb as MiB and convert to KB ×1024; validate deployed /config_info maxima.
+
+### 25.8 Metrics, privacy, retention and events
+Use max per-testcase runtime/memory aggregates, not sums. failedTestCaseIndex if retained is one-based display ordinal; testcase ID is canonical. Lifecycle timestamps use UTC server time.
+
+Student sees own source/result and visible-case feedback only. Hide hidden testcase data/count/order/runtime, raw token/payload and host secrets. HOD/Manager summary-only; SUPER_ADMIN raw access privileged and audited. Encrypt source/raw artifacts at rest; logs/events/queue exclude source/token/hidden data. Academic history follows institution policy; source/raw retention separate. No automatic purge without policy; Student deactivation does not cascade-delete history.
+
+Emit SubmissionAccepted, ExecutionStarted, Graded only after Module 7 final result, ExecutionFailed and RejudgeRequested via outbox. Modules 4/8/9/11 dedupe by eventId/runId; Module 13 owns notices; Module 15 owns audit.
+
+## 26. Adopted decision status
+
+All SUB-D01–SUB-D28 are adopted. Full topic-by-topic register is ADOPTED-DECISIONS.md. No open product decisions remain.
+
+## 27. Engineering implementation gates
+1. Add ProblemVersion/context/attempt/processing/idempotency fields to CodeSubmission.
+2. Add SubmissionRun, JudgeRun, OutboxEvent and IdempotencyRecord.
+3. Implement atomic attempts/outbox/idempotency and idempotent worker.
+4. Backfill legacy tokens only where testcase mapping is provable.
+5. Align Module 5 snapshots and language catalogue.
+6. Integrate activity validators for Modules 4/8/9/10/11.
+7. Implement/pin Judge0 adapter and status/language/config contract.
+8. Integrate Module 7 evaluation, Modules 17/18 recovery, Module 13 and Module 15.
+9. Implement DTO masking/encryption/audit/retention.
+10. Execute 180 QA cases plus concurrency/fault/security/load evidence.
+
+## 28. Official Judge0 CE API evidence
+
+Official Judge0 CE documentation describes API v1.13.1, asynchronous tokenized submissions, batch creation/retrieval, active language/status endpoints, configurable authentication and runtime configuration. It advises against synchronous wait, documents CPU seconds/memory kilobytes, and publishes statuses 1–14 without a dedicated MLE status. Public docs do not establish deployed version/configuration.
+
+Reference: https://ce.judge0.com/
+
+## 29. Source and legacy boundary
+
+The conceptual single CodeSubmission.judge0Token is superseded for new writes by JudgeRun-level tokens. Legacy Assessment-only submission/judge_runs, numeric language IDs, fixed queue concurrency, old polling/retry values and indefinite retention are historical observations only.
