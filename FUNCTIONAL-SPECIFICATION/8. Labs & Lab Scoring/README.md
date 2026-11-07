@@ -1,12 +1,12 @@
 # 8. Labs & Lab Scoring
 
 **Document type:** Functional Specification  
-**Version:** 0.2 — Detailed function-level draft aligned to Functional Specification Standard v1.0  
-**Status:** Detailed source-grounded draft — repository inclusion authorized; target behavior remains unapproved  
+**Version:** 1.0 — Adopted target baseline  
+**Status:** Product/architecture/security decisions adopted (LAB-D01–LAB-D38); engineering and QA execution pending  
 **Module owner:** DEZOLVER Academic Activities / Labs  
 **Related modules:** Course & Enrollment, Problem Management, Code Submission & Judge0, Test Case Evaluation, Groups, Assessments, Notifications, Audit Logging
 
-> **Important:** This document separates source-document requirements, legacy-code audit findings, and proposed product behavior. Recommendations are not considered approved business rules until confirmed.
+> **Adopted target baseline:** Source findings and legacy audit observations remain traceable. All 38 Module 8 decisions are now adopted. Sections 37–42 and ADOPTED-DECISIONS.md are normative and supersede earlier recommendation/TBD annotations. Engineering implementation and QA execution remain pending.
 
 ---
 
@@ -81,7 +81,7 @@ These are conceptual source fields, not confirmed target-release database schema
 - Code execution was handled asynchronously through BullMQ, Judge0, and the evaluation worker.
 - Weighted testcase scoring was supported by the underlying evaluation infrastructure.
 
-**Conclusion:** The dedicated Labs subsystem is absent from the audited legacy snapshot. This specification describes intended product functionality, not a claim that the subsystem already exists.
+**Conclusion:** The dedicated Labs subsystem is absent from the audited legacy snapshot. This specification defines the adopted target product baseline; it does not claim that the target subsystem has already been implemented.
 
 ## 3. Proposed design principles
 
@@ -131,7 +131,7 @@ The following are **recommendations for review**, not confirmed requirements.
 
 ## 5. Actors and permissions
 
-The role assignments below are proposed and must be reconciled with the approved RBAC specification.
+The role assignments below are reconciled to the supplied RBAC and Module 4 adopted access model. The more restrictive Module 8 decisions apply where source matrices conflict.
 
 | Actor | Proposed capability |
 |---|---|
@@ -152,7 +152,7 @@ The role assignments below are proposed and must be reconciled with the approved
 - Manual score adjustment requires an approved grading permission.
 - Hidden testcase and raw Judge0 access follows Module 7’s confidentiality policy.
 
-**[OPEN DECISION]** Confirm whether Faculty is a distinct role or whether HOD/MANAGER manage Labs.
+**Resolved by LAB-D37:** no separate Faculty/Lab Staff role is introduced in v1; use HOD and scoped MANAGER.
 
 ## 6. Lab data model
 
@@ -195,7 +195,7 @@ The conceptual source model contains:
 
 **[RECOMMENDATION]** Use this association to determine eligibility. The Group should not automatically become the submitter or score owner.
 
-**[OPEN DECISION]** Confirm whether the target schema should preserve the GroupLab junction or use another assignment mechanism.
+**Resolved by LAB-D05/LAB-D24:** retain GroupLab as the optional many-to-many association; Module 10 owns GroupLab writes.
 
 ## 7. Lab creation and assignment
 
@@ -223,7 +223,7 @@ A Lab should not be published unless:
 - Due-date configuration is valid, if configured.
 - Required policy settings are valid.
 
-**[OPEN DECISION]** The source material does not establish whether a Lab may contain multiple Problems. The conceptual schema identifies one `problemId`. This draft assumes **one Problem per Lab** unless confirmed otherwise.
+**Resolved by LAB-D03:** v1 supports exactly one Problem per LabAssignment, matching the conceptual `problemId` field.
 
 ### 7.3 Assignment eligibility
 
@@ -258,7 +258,7 @@ This is a proposed lifecycle, not an audited implementation:
 - Staff can inspect a Lab after it closes.
 - Publishing or closing a Lab does not delete submissions or scores.
 
-**[OPEN DECISION]** Does `dueDate` mean a normal deadline, hard closure, or deadline that permits late submissions?
+**Resolved by LAB-D09/LAB-D29:** dueDate is an inclusive UTC hard cutoff by default; late acceptance without penalty is an explicit Lab policy option.
 
 ## 9. Student Lab workflow
 
@@ -340,7 +340,7 @@ This allows different Labs to use different maximum scores without changing test
 
 ### 11.3 Rounding
 
-**[OPEN DECISION]** Confirm:
+**Resolved by LAB-D08:**
 - Whether Lab scores may contain decimals.
 - Decimal precision (whole numbers, two decimal places, etc.).
 - Whether rounding occurs during conversion or only at display/report time.
@@ -377,7 +377,7 @@ The old code does not establish whether highest, latest, first, or first-accepte
 
 ### 12.3 Attempt policy
 
-**[OPEN DECISION]** Confirm whether Lab creators may configure unlimited attempts, a maximum attempt count, one attempt, or attempt availability until deadline.
+**Resolved by LAB-D18:** attempts are unlimited by default; an optional positive maximum may be configured per published Lab revision.
 
 **[RECOMMENDATION]** If configurable attempts are supported, use highest score as the default unless a Lab explicitly selects another approved policy.
 
@@ -478,7 +478,7 @@ These are proposed display/progress concepts, not approved persisted status valu
 
 ### 15.2 Completion criteria
 
-**[OPEN DECISION]** Is a Lab complete when the Student submits any attempt, an attempt is evaluated, a minimum score is achieved, the best score is recorded, or staff marks it complete?
+**Resolved by LAB-D17/LAB-D33:** Lab completion is derived when an accepted attempt has a complete Module 7 evaluation; no minimum score threshold is required.
 
 **Recommendation:** Use a configurable completion threshold if completion requires more than submission, while keeping submission and completion status distinct.
 
@@ -498,7 +498,7 @@ Potential Lab events:
 - Feedback added
 - Lab reopened
 
-**[OPEN DECISION]** Confirm which events notify Students/staff and whether reminders are required.
+**Resolved by LAB-D24/LAB-D35:** Module 8 emits safe committed Lab events through the outbox; Module 13 owns recipient, channel, reminder and delivery configuration.
 
 ## 17. Edge cases and failure handling
 
@@ -571,36 +571,23 @@ These are proposed criteria for review.
 | LAB-19 | Lab closes while submissions are in progress | Behavior follows approved closure policy |
 | LAB-20 | Student accesses another Student’s submission API | Access denied |
 
-## 20. Open decisions requiring confirmation
+## 20. Adopted Module 8 product defaults
 
-### Product decisions
+All product, architecture and security questions from the original draft are resolved by LAB-D01–LAB-D38. The complete register is in ADOPTED-DECISIONS.md.
 
-1. Group vs individual: confirm Group assignment + individual submission model.
-2. Problem count: one Problem per Lab or multiple Problems?
-3. Score formula: confirm `Lab Score = Evaluation Percentage × Lab Max Score / 100`.
-4. Score rounding: whole number, fixed decimal precision, or retain decimals?
-5. Attempts: confirm multiple attempts with highest score as default.
-6. Attempt limits: unlimited by default or configurable?
-7. Deadline: does `dueDate` mean hard closure or late-submission cutoff?
-8. Late policy: confirm no penalty unless configured.
-9. Manual grading: is staff score override required in initial release?
-10. Feedback: required, optional, or staff-only?
-11. Completion: what defines a completed Lab?
-12. Assignment scope: Course, Section, Group, individual Student, or combinations?
-13. Faculty role: distinct role or HOD/MANAGER responsibility?
-14. Problem versioning: should Lab preserve Problem/testcase version used at publication?
+| Area | Adopted v1 target |
+|---|---|
+| Assignment model | One Problem per Lab; Group assignment optional/multi-Group; individual Student attempts and scores |
+| Scoring | Module 7 evaluation percentage × Lab maxScore / 100; two-decimal half-up rounding; no score for incomplete evaluation |
+| Attempts | Unlimited by default; optional maxAttempts; highest valid completed Lab score; latest accepted attempt breaks ties |
+| Deadline | Optional UTC dueDate; inclusive hard cutoff by default; optional late acceptance without penalty |
+| Lifecycle | DRAFT → PUBLISHED → CLOSED → ARCHIVED; restore to DRAFT; no hard delete |
+| Version/history | Published Lab revisions pin immutable ProblemVersion and grading/availability settings; prior submissions remain pinned |
+| Eligibility | Active Course enrollment plus Course/Lab/Problem scope intersection; GroupLab is an additional filter, not an enrollment substitute |
+| Grading | Manual score override disabled in v1; feedback optional and Student-owner readable |
+| Visibility | Student own results; HOD/Manager scoped summaries; Finance metadata-only; raw/hidden artifacts follow Modules 6/7 |
 
-### Technical and architecture decisions
-
-15. Dedicated Lab domain vs Rooms/Assessments reuse.
-16. Target schema for LabAssignment, LabSubmission, and GroupLab.
-17. Relationship between Course enrollment, Cohort, Section, and Group.
-18. Whether Lab score is stored separately or derived from CodeSubmission/evaluation.
-19. How final-score selection is persisted and recalculated.
-20. Behavior when Lab or Problem is edited after submissions exist.
-21. How rejudge affects Lab score and downstream progress.
-22. Required audit fields and score-history retention.
-23. Notification and event contracts for Lab lifecycle changes.
+Remaining work is engineering: schema migration, server-side RBAC/scope checks, Module 6/7 integration, GroupLab integration with Module 10, lifecycle/event wiring and QA execution.
 
 ## 21. Dependencies
 
@@ -1540,48 +1527,22 @@ Candidate audit actions (not approved): create/update/publish/archive, GroupLab 
 | LAB-E29 | Problem changed after submission | Historic traceability required |
 | LAB-E30 | Rejudge while manual override exists | Precedence/reconciliation TBD |
 
-## 33. Decision log — carry forward to later review
+## 33. Decision log status
 
-| ID | Missing requirement/conflict | Source issue | Owner | Status |
-|---|---|---|---|---|
-| LAB-D01 | Staff Lab list fields, filters, sort, pagination, actions | Page mapping lists entities only | Product/UX | Open |
-| LAB-D02 | Title/description requiredness and limits | Schema types only | Product | Open |
-| LAB-D03 | One Problem or multiple Problems per Lab | Schema has one problemId | Product/Architecture | Open |
-| LAB-D04 | maxScore range/positive/decimal policy | Schema maxScore int | Academic/Data | Open |
-| LAB-D05 | Group assignment required/optional/one/many | GroupLab junction | Product | Open |
-| LAB-D06 | Manager Labs Full CRUD vs V/C/U*; Delete permission | RBAC matrix discrepancy | Product/Security | Open |
-| LAB-D07 | Evaluation-to-Lab score formula and verdict mapping | Business Flow says evaluation→score only | Academic/Product | Open |
-| LAB-D08 | Score precision/rounding/maxScore changes | decimal(5,2) score vs int maxScore | Academic/Data | Open |
-| LAB-D09 | DueDate hard cutoff/late acceptance/grace/penalty | Schema dueDate only | Product/Academic | Open |
-| LAB-D10 | Lab status field and state transitions | PublishStatus exists; LabAssignment status absent | Architecture/Data | Open |
-| LAB-D11 | Publish/unpublish/close/archive/delete/reopen semantics | Source enum vs proposed lifecycle | Product | Open |
-| LAB-D12 | Edit Course/Problem/scope/maxScore/dueDate after submissions | No snapshot fields | Product/Architecture | Open |
-| LAB-D13 | Problem/testcase version at Lab publication/submission | No version field | Product/Architecture | Open |
-| LAB-D14 | CourseEnrollment/Section/GroupLab/GroupMember eligibility precedence | Source relations but no policy | Product/Academic | Open |
-| LAB-D15 | Student leaves/is removed from Group; historical/current access | Group membership lifecycle separate | Product | Open |
-| LAB-D16 | Group assignment vs collaborative/shared submission | Group workflow + studentId LabSubmission | Product/Academic | Open |
-| LAB-D17 | Lab completion and minimum-score rule | Dashboard mapping; no Lab completion entity | Product/Academic | Open |
-| LAB-D18 | Attempt limit and final score selection | Schema no attempt field | Product/Academic | Open |
-| LAB-D19 | CodeSubmission/LabSubmission transaction, cardinality, idempotency | Relation ambiguity | Architecture/Data | Open |
-| LAB-D20 | Rejudge permissions, attempt count, version and history | Modules 6/7/RBAC | Product/Architecture | Open |
-| LAB-D21 | Rejudge recomputation and prior score retention | No score history field | Product/Architecture | Open |
-| LAB-D22 | Manual override roles, reason, approval, history, revert | Not source-confirmed | Product/Academic/Security | Open |
-| LAB-D23 | Student/staff evaluation details and raw/hidden data visibility | Modules 6/7 | Security/Product | Open |
-| LAB-D24 | Audit actions, retention, notification events/recipients | Modules 13/15 not finalized | Product/Security | Open |
-| LAB-D25 | CodeSubmission↔LabSubmission cardinality | ERD relation ambiguous | Architecture/Data | Open |
-| LAB-D26 | Store Lab score or derive from evaluation | Schema includes score | Architecture/Data | Open |
-| LAB-D27 | Score version/recalculation when Problem/maxScore/testcases change | No version/provenance fields | Architecture/Data | Open |
-| LAB-D28 | Feedback visibility, length, edit rights, notification | feedback text only | Product | Open |
-| LAB-D29 | Deadline timezone, inclusive cutoff, grace/late status | dueDate only | Product/Architecture | Open |
-| LAB-D30 | Staff extension/individual deadline override | No source field | Product | Open |
-| LAB-D31 | Server vs client submission timestamp | Source timestamp field only | Architecture | Open |
-| LAB-D32 | ContentScope meanings/inheritance | Enum only | Product/Architecture | Open |
-| LAB-D33 | Persisted vs derived progress/completion states | No Lab progress model | Product/Architecture | Open |
-| LAB-D34 | Manual override vs rejudge precedence | No source rule | Product/Architecture | Open |
-| LAB-D35 | Audit/notification failure after operation commit | Central Module 13/15/18 | Architecture | Open |
-| LAB-D36 | Finance Team exact Lab content/Student result/score/feedback access | RBAC View broad | Product/Security | Open |
-| LAB-D37 | Faculty/Lab Staff distinct role or HOD/Manager label | Page Mapping vs RBAC roles | Product/RBAC | Open |
-| LAB-D38 | Exact Lab UI route/control/message wording | Page mapping names page only | Product/UX | Open |
+**LAB-D01–LAB-D38 are adopted.** No Module 8 product/architecture/security decision remains open. The complete decision register is ADOPTED-DECISIONS.md.
+
+| Workstream | Status | Remaining work |
+|---|---|---|
+| Assignment/product model | Adopted | None |
+| RBAC and academic scope | Adopted | Implement server enforcement |
+| Group assignment | Adopted | Integrate Module 10 GroupLab writes/membership |
+| Problem versioning | Adopted | Implement revision pinning/migration |
+| Submission/evaluation | Adopted | Integrate Modules 6/7 and outbox |
+| Score/attempt policy | Adopted | Implement calculation/history/selection |
+| Lifecycle/deadline/progress | Adopted | Integrate Module 17; implement derived views |
+| Feedback/manual grading | Feedback adopted; manual override disabled | Implement feedback; no score override |
+| Audit/notifications/recovery | Module ownership adopted | Integrate Modules 13/15/18 |
+| QA | 188 cases defined | Execute and record evidence |
 
 ## 34. Module-level acceptance criteria
 
@@ -1595,10 +1556,10 @@ Candidate audit actions (not approved): create/update/publish/archive, GroupLab 
 - [ ] Student submission links to correct Lab/Student/Problem.
 - [ ] Unauthorized submit does not create CodeSubmission/Judge0 execution.
 - [ ] Lab evaluation reuses Modules 6/7 and distinguishes infrastructure errors.
-- [ ] Lab score formula, rounding, max score, attempt policy and late policy are approved before final implementation.
+- [x] Lab score formula, rounding, max score, attempt policy and late policy are adopted in LAB-D07–D09/D18/D29.
 - [ ] Student LabSubmission access is owner-restricted.
 - [ ] Staff performance access is College/Department/Section/Group scoped.
-- [ ] Manual score override is not enabled without permission/history policy.
+- [x] Manual score override is disabled in v1 (LAB-D22/D34).
 - [ ] Rejudge preserves traceability and does not unintentionally create a Student attempt.
 - [ ] Course completion is not conflated with Lab completion.
 - [ ] Notification/audit contracts follow Modules 13/15 and avoid sensitive payloads.
@@ -1606,41 +1567,150 @@ Candidate audit actions (not approved): create/update/publish/archive, GroupLab 
 
 ## 35. Review/readiness checklist
 
-- [ ] Business Flow v2 and original checked.
-- [ ] Page-to-DB Mapping v2 and original checked.
-- [ ] RBAC module/page/API matrices checked; conflicts preserved.
-- [ ] Conceptual schema fields/relations/enums captured.
-- [ ] LAB-F001–F020 specified and linked to QA.
-- [ ] Course/Section/Group eligibility cross-checked with Modules 4/10.
-- [ ] CodeSubmission/evaluation/score handoff cross-checked with Modules 6/7.
-- [ ] Student ownership and hidden-data protection reviewed.
-- [ ] Lifecycle, attempts, scoring, deadline, manual grading and progress decisions carried forward.
-- [ ] Module 13 notifications, Module 15 audit, Module 17 state machine, Module 18 recovery dependencies recorded.
-- [ ] Product/Architecture/Security/Academic review reserved for later all-module pass.
+**Source/product review — complete**
+- [x] Business Flow v2 and original reviewed.
+- [x] Page-to-DB Mapping v2 and original reviewed.
+- [x] RBAC module/page/API matrices reviewed; Manager Delete and Finance broad View conflicts resolved conservatively.
+- [x] Conceptual schema fields, relations and enums captured.
+- [x] LAB-F001–F020 reviewed and traced to QA.
+- [x] Course/Section/Group eligibility reconciled with Modules 4/10.
+- [x] CodeSubmission/evaluation/scoring handoff aligned to Modules 6/7.
+- [x] All LAB-D01–D38 adopted and recorded.
 
-## 36. Source references
+**Engineering/release — pending**
+- [ ] Implement LabStatus, LabAssignmentRevision, LabSection and LabScoreHistory migrations.
+- [ ] Implement scoped HOD/Manager/Finance/Student APIs and GroupLab integration.
+- [ ] Integrate Module 6 LAB context/idempotency and one-to-one LabSubmission linkage.
+- [ ] Integrate Module 7 final evaluation event and score conversion/rejudge reconciliation.
+- [ ] Implement attempt allocation, best-score query, deadline policy, feedback and derived progress.
+- [ ] Integrate Modules 13, 15, 17 and 18.
+- [ ] Execute all 188 QA cases plus migration, security, concurrency and outbox recovery tests.
 
-Primary sources:
-- docs/source-text/Business Flow v2.md
-- docs/source-text/Business Flow.md
-- docs/source-text/Page - DB Mapping v2.md
-- docs/source-text/Page - DB Mapping.md
-- docs/source-text/RBAC.md
-- docs/source-text/scheema.md
+**Approval boundary:** product decisions are adopted; the target Lab subsystem, schema changes, UI, integrations and QA execution are not represented as implemented.
 
-Cross-module references:
-- Module 4 — Course & Enrollment
-- Module 5 — Problem Management
-- Module 6 — Code Submission & Judge0
-- Module 7 — Test Case Evaluation
-- Module 10 — Groups
-- Module 13 — Notifications
-- Module 15 — Audit Logging
-- Module 17 — Functional State Machines
-- Module 18 — Edge Cases & Failure Handling
+## 37. Adopted target contract and authority
 
-Additional evidence referenced by the earlier Module 8 draft: DEZOLVER_LABS_AND_LAB_SCORING_DEEP_DIVE.md (legacy forensic report; outside the six primary sources, not target approval).
+Earlier source and legacy-audit sections preserve the evidence used during review. Where those sections contain RECOMMENDATION, TBD or OPEN labels, Sections 37–42 and ADOPTED-DECISIONS.md are the adopted v1 target and take precedence. The legacy audit is not evidence that the target Lab subsystem exists.
 
----
+## 38. Normative Lab domain and lifecycle
 
-**Module 8 authoring checkpoint:** detailed source-grounded draft committed for repository inclusion. Open decisions remain in LAB-D01–D38 for the later all-module review. Proceed to Module 9 under the user's requested workflow; do not pause to resolve these decisions now.
+### Assignment and version model
+- A LabAssignment belongs to exactly one Course and one Problem. Group assignment is optional and may reference multiple Groups through GroupLab.
+- A published LabAssignment creates an immutable LabAssignmentRevision. Each revision pins one published ProblemVersion and snapshots Course/Problem association, title/description, scope, maxScore, availability/dueDate, late policy, attempt policy and publication time.
+- Editing a published Lab creates a new revision. Existing LabSubmissions remain associated with their original revision and ProblemVersion. Changing maxScore, dueDate, scope, Problem or Group target never silently recalculates old scores.
+- Problem and Lab must belong to the same College. The effective Student audience is the intersection of Course scope, Lab scope, Problem scope, Section/Group assignment and active enrollment.
+- Add LabStatus: DRAFT, PUBLISHED, CLOSED, ARCHIVED. DRAFT is staff-only; PUBLISHED is visible to eligible Students; CLOSED is read-only for new attempts; ARCHIVED is historical-only. Restore ARCHIVED to DRAFT. Never hard-delete a Lab or cascade-delete academic history.
+
+### Assignment and eligibility
+- New submissions require an active Student account, active College/entitlement, PUBLISHED Course, CourseEnrollment.status=ENROLLED, active included Section, published Lab revision and published ProblemVersion.
+- CourseEnrollment.COMPLETED and WITHDRAWN do not allow new attempts; own historical Lab records remain viewable subject to account/privacy policy. CourseEnrollment.completedAt is not Lab completion.
+- If GroupLab rows exist for the current assignment, Student must be a member of at least one linked active Group. If none exist, eligible Course audience applies. Group membership never replaces Course enrollment.
+- Joining an assigned Group after publication grants eligibility once all other conditions pass. Group removal/inactivation blocks new attempts immediately but does not delete the Student's prior submissions or scores.
+- SECTION_ONLY uses explicit Section targets (LabSection where required); DEPT_WIDE includes active Sections in the owning Department; GLOBAL includes active Sections in the owning College and is SUPER_ADMIN-only. GLOBAL never means public or cross-College access.
+- Manager can create/update only SECTION_ONLY Labs in assigned Section/permitted Group scope. HOD is limited to assigned College+Department. Finance is metadata-only within its College and cannot inspect Student academic records.
+
+### Submission and attempts
+- Lab submission is a Module 6 CodeSubmission with context=LAB and contextId=LabAssignment ID. Module 6 owns source, attempt intake, idempotency, SubmissionRun and JudgeRun; Module 8 owns the LabSubmission link and Lab score.
+- One accepted CodeSubmission links to one LabSubmission (`codeSubmissionId` unique). Each Student attempt is a new CodeSubmission/LabSubmission pair. This resolves the conceptual ERD's CodeSubmission→many LabSubmission relation in favor of Module 6's one-context-per-CodeSubmission contract.
+- Attempt numbers are allocated atomically per Student+LabAssignment. Attempts are unlimited by default; an optional positive maxAttempts applies to a published revision. Only accepted CodeSubmissions count. Same Idempotency-Key replay does not create a new attempt. Only one in-flight attempt per Student+Lab is allowed.
+- Rejudge creates a new SubmissionRun only; it is not a Student attempt and does not create a new LabSubmission.
+
+### Lifecycle transitions
+
+| From | To | Guard/meaning |
+|---|---|---|
+| Create | DRAFT | Staff-only, required fields and scoped relations valid |
+| DRAFT | PUBLISHED | HOD/SUPER_ADMIN; complete revision, ProblemVersion, audience and scoring config |
+| PUBLISHED | CLOSED | HOD/SUPER_ADMIN; stop new submissions, preserve history |
+| CLOSED | PUBLISHED | HOD/SUPER_ADMIN; reopen under a new/selected valid revision |
+| DRAFT/PUBLISHED/CLOSED | ARCHIVED | HOD/SUPER_ADMIN; soft retirement, no new submissions |
+| ARCHIVED | DRAFT | HOD/SUPER_ADMIN restore; new publish required |
+
+## 39. Normative scoring, late policy and completion
+
+### Score calculation
+
+\`LabScore = roundHalfUp(EvaluationScorePercent × Revision.maxScore / 100, 2)\`
+
+- EvaluationScorePercent and verdict come only from a complete Module 7 result. Module 8 does not re-run Judge0 or re-interpret verdicts.
+- LabSubmission.score is nullable until final evaluation completes. A complete evaluation with 0% is a valid final score of 0. Infrastructure/unknown/incomplete evaluation has no Lab score and is not treated as zero.
+- Persist the current attempt score in LabSubmission.score (DECIMAL(12,2)); append score changes to LabScoreHistory. Derive best/final Student score from finalized attempts.
+- Highest valid finalized attempt is the best score. A tie selects the latest accepted attempt. Keep latest attempt and best attempt separately visible to authorized Student/staff.
+
+### Deadline and late behavior
+- dueDate is optional and stored/compared in UTC. If absent, deadline enforcement is not applied.
+- Default is BLOCK_AFTER_DUE. Submission is on time when trusted server receivedAt <= dueDate; later submissions are rejected.
+- Optional ACCEPT_NO_PENALTY accepts late submissions and stores isLate=true. No numeric penalty, grace period or individual extension exists in v1.
+- Student-facing dates may be localized for display; client clock and Judge0 completion timestamp are never authoritative for lateness.
+- A global dueDate change creates a new LabAssignmentRevision; existing attempts preserve their original timestamp/revision. Per-Student extensions are deferred.
+
+### Completion and progress
+- Derive NOT_STARTED, SUBMITTED, EVALUATION_PENDING, COMPLETED and EVALUATION_FAILED from LabSubmission/CodeSubmission/SubmissionRun. Do not create a Lab progress percentage or infer Lab completion from CourseEnrollment.completedAt.
+- COMPLETED means at least one accepted attempt has a complete Module 7 evaluation, regardless of percentage. There is no passing threshold or manual completion override in v1.
+- A pending or infrastructure-failed evaluation is not completion and has no final Lab score. A completed 0% result is still evaluated/completed.
+
+## 40. Normative roles, feedback and privacy
+
+| Role | Lab permissions and data |
+|---|---|
+| SUPER_ADMIN | Global Lab administration, lifecycle, scoped data inspection and privileged Module 6/7 rejudge/raw access subject to audit |
+| HOD | Create/view/update/lifecycle control within College+Department; inspect scoped Student Lab performance and provide feedback |
+| MANAGER | View/create/update within assigned Section/permitted Group, SECTION_ONLY only; cannot Delete/publish/close/archive/reopen; inspect scoped summaries and provide feedback |
+| FINANCE_TEAM | College-scoped metadata-only View; no LabSubmission, Student identity/performance, score, feedback, source or raw evaluation |
+| STUDENT | View eligible Labs, submit own attempts, view own history/score/feedback and Module 7 safe visible-test feedback only |
+
+- No separate Faculty/Lab Staff role is introduced in v1. Page labels do not create RBAC roles.
+- Manual score override is disabled. Lab CRUD/View does not imply score editing.
+- Feedback is optional plain text up to 10,000 characters after trimming. HOD/Manager may add/edit within scope; only the Student owner may read it. Blank input clears feedback; changes are audited.
+- Hidden testcase data, raw Judge0 transport/tokens, Student source code and other Students' private records never appear in ordinary Lab APIs/events. Raw inspection follows Module 6/7 audited SUPER_ADMIN policy.
+
+## 41. Cross-module integration and ownership
+
+| Module | Contract |
+|---|---|
+| 3 — Subscription & Seats | Owns entitlements/seats; Lab activity does not alter usedSeats or purchasedSeats |
+| 4 — Course & Enrollment | Owns Course, CourseSection, CourseEnrollment, active Student/Section audience and Course status |
+| 5 — Problem Management | Owns Problem CRUD, published ProblemVersion, content scope, language and resource limits |
+| 6 — Code Submission & Judge0 | Owns CodeSubmission, LAB context, idempotency, attempts intake, SubmissionRun/JudgeRun and rejudge execution |
+| 7 — Test Case Evaluation | Owns testcase execution results, verdict, evaluation percentage and hidden-data masking |
+| 10 — Groups & Membership | Owns Group, GroupMember and GroupLab association writes; Module 8 consumes authorized links/membership |
+| 13 — Notifications | Owns delivery, recipients, channels and reminder configuration for safe committed Lab events |
+| 15 — Audit Logging | Owns canonical audit schema/retention for Lab lifecycle, feedback and score-history events |
+| 17 — Functional State Machines | Owns canonical lifecycle transitions; Module 8 supplies Lab state requirements |
+| 18 — Edge Cases & Failure Handling | Owns idempotent retry, partial failure, orphan reconciliation and outbox recovery |
+
+### Submission/score event sequence
+1. Module 8 validates Lab revision, Course enrollment, Group/Section scope, deadline, attempt policy and ProblemVersion.
+2. Module 6 accepts the CodeSubmission (LAB context), atomically allocates the attempt and writes its SubmissionRun/outbox using Idempotency-Key.
+3. Module 8 creates one LabSubmission link for the CodeSubmission in the shared transaction where possible; otherwise a durable accepted-submission outbox consumer creates it idempotently and Module 18 reconciles missing links.
+4. Module 6/7 complete evaluation and commit SubmissionGraded only after final result commit.
+5. Module 8 consumes the event idempotently, calculates Lab score from the pinned revision, updates LabSubmission.score and appends LabScoreHistory when a score changes.
+6. Module 13 delivers only configured notifications; Module 15 audits required actions. Event payloads never include source, hidden testcase data or Judge0 tokens.
+
+## 42. Schema delta, business rules and readiness
+
+### Target schema delta
+- LabAssignment: add LabStatus, creator/lifecycle timestamps, current revision pointer and optional availableFrom.
+- LabAssignmentRevision: immutable revision number, LabAssignment ID, Course/Problem IDs, ProblemVersion ID, title/description, scope, maxScore, availableFrom, dueDate, latePolicy, maxAttempts and publication metadata.
+- LabSection: Lab revision/assignment to explicit Section junction for SECTION_ONLY targeting where CourseSection alone is too broad.
+- LabSubmission: add labAssignmentRevisionId, attemptNumber, isLate and trusted server submittedAt/acceptedAt; make score nullable DECIMAL(12,2); unique codeSubmissionId. Keep feedback as optional text.
+- LabScoreHistory: append-only previous/new score, LabSubmission, evaluationRunId/sourceEventId, formula version, actor/service and timestamp.
+- GroupLab remains a Module 10-owned junction; LabAssignmentRevision changes must not mutate prior LabSubmission revision references.
+
+### Core validation rules
+- Reject invalid/missing Course, Problem, title, positive maxScore, ContentScope, Group/Section or published ProblemVersion before Lab publish.
+- Reject Student requests with foreign Student/Lab IDs, foreign College/Department/Section/Group, inactive Group, inactive/non-enrolled CourseEnrollment, unpublished Lab or ProblemVersion mismatch.
+- Reject submission before availableFrom, after hard dueDate cutoff, after CLOSED/ARCHIVED, when maxAttempts reached, or while another attempt for the same Student/Lab is in flight.
+- Return pending/incomplete for processing or infrastructure failures; never create a Lab score from null/unknown Module 7 results.
+- Idempotent CodeSubmission/LabSubmission callbacks and SubmissionGraded consumption must not duplicate attempt, score history or notification side effects.
+- Scope changes, Group removal, Course withdrawal and archive preserve historical submission/score records; they do not confer new submission eligibility.
+
+### Release checklist
+- [x] Source review and LAB-D01–LAB-D38 adoption complete.
+- [x] 20 function IDs retained and aligned to the normative contract.
+- [x] 188 target QA cases defined and uniquely identified.
+- [ ] Schema migrations and indexes implemented.
+- [ ] Scoped APIs/UI and lifecycle implemented.
+- [ ] Modules 4–7 and 10 integration complete.
+- [ ] Module 13/15/17/18 contracts implemented.
+- [ ] Execute QA, migration, authorization, concurrency and recovery tests.
