@@ -1,13 +1,13 @@
 # 7. Test Case Evaluation
 
 **Document type:** Functional Specification  
-**Version:** 0.2 — Detailed draft aligned to Functional Specification Standard v1.0  
-**Status:** Detailed draft — ready for product/architecture/security review; target behavior remains unapproved  
+**Version:** 1.0 — Adopted target baseline  
+**Status:** Product decisions adopted (EVAL-D01–EVAL-D27); engineering and QA execution pending  
 **Module owner:** DEZOLVER Evaluation / Judge0 integration  
 **Primary technical source:** `DEZOLVER_EVALUATION_ALGORITHM_AND_TEST_CASE_SCORING_DEEP_DIVE.md`  
 **Cross-reference sources:** Business Flow v2, Page-to-DB Mapping v2, schema reconstruction, Module 5 — Problem Management, Module 6 — Code Submission & Judge0
 
-> **Important:** This document distinguishes (1) reported current implementation, (2) requirements inferred from the documented business flow, and (3) unresolved product/technical decisions. It does not treat a code defect as an approved business rule. Conflicting source versions are called out rather than silently reconciled.
+> **Adopted target baseline:** This specification reconciles the supplied source and legacy audit with Modules 5 and 6. Sections 30–33 and ADOPTED-DECISIONS.md are normative. Earlier audit descriptions remain evidence about a legacy snapshot, not target implementation requirements.
 
 ---
 
@@ -72,6 +72,8 @@ Test-case evaluation may be invoked from Practice Problems, Courses, Labs, Asses
 - **[SOURCE—BUSINESS]**: workflow supported by Business Flow v2 or Page-to-DB Mapping v2.
 - **[DERIVED REQUIREMENT]**: functional safeguard or behavior proposed based on the sources; it needs product/technical confirmation if not explicitly documented.
 - **[OPEN DECISION]**: source material does not establish a definitive rule.
+- **[ADOPTED TARGET]**: resolved product policy EVAL-D01–EVAL-D27; see Sections 30–33 and ADOPTED-DECISIONS.md.
+- **[ENGINEERING GATE]**: schema migration, implementation, deployment verification, integration or QA execution remains pending.
 
 The deep-dive report describes a specific source-code snapshot. It should not automatically override the original schema reconstruction if they represent different versions.
 
@@ -550,42 +552,13 @@ The following are proposed high-level acceptance criteria for the evaluation fea
 | TC-EVAL-19 | Authorized staff rejudge | Fresh execution, traceability, approved history/downstream update |
 | TC-EVAL-20 | Rejudge fails midway | Existing/current result behavior follows approved recovery policy |
 
-## 18. Open decisions and source gaps
+## 18. Original source questions — resolved for the v1 target
 
-These are not assumed to be settled by the source documents.
+The original draft listed 27 questions spanning activity contexts, partial credit, verdict precedence, hidden feedback, staff access, rejudge, testcase schema/weight/identity, Judge0 mapping/comparator, resource limits, retries, versioning, persistence, events, retention, raw payloads, output caps, audit and monitoring.
 
-### Product / business decisions
-1. Which activity contexts are in scope for this evaluation engine in the target release: Practice, Courses, Labs, Assessments, Contests?
-2. Is partial credit an intended feature in all contexts or only some?
-3. What is the intended final verdict when multiple failure types occur?
-4. Is `PARTIAL` a desired verdict or should score alone communicate partial credit?
-5. Should hidden testcase pass/fail details be shown to Students?
-6. Which staff roles may inspect raw code and execution artifacts?
-7. Is rejudge a supported operational feature for the target release, and who can invoke it?
-8. Should historical grading results be preserved as versions or overwritten?
+All EVAL-D01–EVAL-D27 are adopted. The original questions are preserved as review-scope history, not current open decisions. Resolved target behavior is specified in Sections 30–33 and ADOPTED-DECISIONS.md.
 
-### Technical decisions
-9. Which testcase schema is authoritative (`TestCase` vs `ProblemTestCase`)?
-10. Is testcase weight supported in the target schema and API?
-11. What is the canonical testcase visibility field (`isHidden` vs `isSample`)?
-12. What is the canonical testcase ordering field and stable identity?
-13. Is `failedTestCaseIndex` required? If yes, define index base and semantics.
-14. Which Judge0 CE version/configuration is deployed?
-15. What is the exact comparator behavior for whitespace, newlines, case sensitivity, and floating-point values?
-16. Are custom comparators supported or planned?
-17. Are time/memory limits applied per testcase or to the aggregate evaluation?
-18. What is the policy for empty expected output and null/empty stdin?
-19. What are retry, polling timeout, cancellation, and worker-recovery rules?
-20. What is the submission-time testcase snapshot/version policy?
-21. What is the canonical persistence model: legacy CodeSubmission or assessment submission/judge-run tables?
-22. What is the grading event contract for contest, assessment, course progress, and lab score consumers?
-
-### Operational / security decisions
-23. Retention duration for source code, testcase results, stdout/stderr, compile output, and raw Judge0 responses.
-24. Whether raw Judge0 payloads are stored and who can access them.
-25. Output truncation limits and sanitization rules.
-26. Audit requirements for staff inspection, rerun, and testcase edits.
-27. Monitoring/alerting requirements for queue backlog, Judge0 failures, and stuck evaluations.
+Engineering implementation, deployed Judge0 verification, integrations and QA execution remain pending.
 
 ## 19. Dependencies
 
@@ -1027,49 +1000,80 @@ assessment.submissions holds aggregate result/status/score; assessment.judge_run
 
 ## 28. Decision log status
 
-Existing EVAL-D01–D27 remain open unless product owner resolves them. The following topics must remain explicit:
+**EVAL-D01–EVAL-D27 are adopted.** No product/architecture/security decisions remain open in Module 7. Full register: ADOPTED-DECISIONS.md.
 
-| Decision | Topic | Owner | Status |
-|---|---|---|---|
-| EVAL-D09 | testcase selection/snapshot/empty set | Product/Architecture | Open |
-| EVAL-D10 | testcase schema, weight, visibility | Product/Data | Open |
-| EVAL-D11 | testcase identity/order/index | Product/Architecture | Open |
-| EVAL-D12 | hidden feedback/masking | Security/Product | Open |
-| EVAL-D13 | Judge0 status/verdict mapping | Product/Architecture | Open |
-| EVAL-D14 | infrastructure error vs code verdict | Product/Architecture | Open |
-| EVAL-D15 | comparator/floats/empty output | Product/Architecture | Open |
-| EVAL-D16 | custom comparator/checker | Product | Open |
-| EVAL-D17 | resource limits vs assessment duration | Product/Architecture | Open |
-| EVAL-D18 | score/weights/rounding/verdict/partial | Product/Academic | Open |
-| EVAL-D19 | retries/timeouts/cancel/recovery | Architecture/Ops | Open |
-| EVAL-D20 | Problem/testcase snapshot/version | Product/Architecture | Open |
-| EVAL-D21 | persistence/token cardinality/history | Architecture/Data | Open |
-| EVAL-D22 | rerun/rejudge roles and downstream effects | Product/Security | Open |
-| EVAL-D23 | output/raw data/retention | Security/Privacy | Open |
-| EVAL-D24 | outbox/grading event/idempotency | Architecture | Open |
-| EVAL-D25 | notifications/progress integration | Product/Architecture | Open |
-| EVAL-D26 | public result DTO fields | Product/Security | Open |
-| EVAL-D27 | monitoring/stuck job operations | Ops/Architecture | Open |
+| Workstream | Status | Remaining work |
+|---|---|---|
+| Evaluation policy | Adopted | None |
+| ProblemVersion/testcase schema | Adopted through Module 5 | Schema migration/integration |
+| Submission/run persistence | Adopted through Module 6 Option B | Schema migration/integration |
+| Judge0 comparator/status | Adopted deployment-neutral contract | Pin deployed version/config and contract-test |
+| Hidden-data policy | Adopted | Implementation/security test |
+| Rejudge/history | Adopted | Implementation/test |
+| Grading events | Adopted | Cross-module integration |
+| Operations/retention | Policy adopted | Configuration/implementation |
+| QA | 200 cases defined | Execute and record evidence |
 
 ## 29. Review and readiness checklist
 
-- [ ] TEST-F001–F025 reviewed by Product, Architecture, Security, Evaluation/Judge0, and academic owners.
-- [ ] TestCase vs ProblemTestCase schema reconciled.
-- [ ] isHidden vs isSample mapping approved.
-- [ ] Weight support/default/range approved.
-- [ ] Stable testcase identity/order/index/failedTestCaseIndex approved.
-- [ ] Judge0 version/comparator semantics verified.
-- [ ] Problem time/memory limits correctly sourced (not assessment duration substituted).
-- [ ] Score formula, precision, rounding, zero-weight behavior approved.
-- [ ] Verdict precedence and partial-credit policy approved.
-- [ ] Infrastructure errors distinguished from Student-code failures.
-- [ ] Hidden feedback/diagnostic masking tested server-side.
-- [ ] Raw JudgeRun access/output limits/retention approved.
-- [ ] Student/staff result DTO permissions approved.
-- [ ] Rejudge permissions, run history and overwrite/version behavior approved.
-- [ ] Testcase snapshot and Problem edit policy approved.
-- [ ] Grading events align with Modules 8/9/11/13/15.
-- [ ] Queue/poll/retry/recovery align with Modules 17/18.
-- [ ] QA coverage includes all functions and security boundaries.
+**Product policy — complete**
+- [x] EVAL-D01–EVAL-D27 adopted.
+- [x] Five evaluation contexts defined.
+- [x] ProblemVersion/testcase identity, visibility and ordering aligned to Module 5.
+- [x] CodeSubmission/SubmissionRun/JudgeRun aligned to Module 6 Option B.
+- [x] Comparator, resource limits, score and verdict policy defined.
+- [x] Hidden-data and role-scoped result visibility defined.
+- [x] Incomplete execution, rejudge history and grading events defined.
+- [x] Retention, output limits, audit and monitoring policies defined.
 
-**Review gate:** Module 7 detailed draft is ready for product/architecture/security review. This commit does not approve legacy behavior or unresolved decisions. Module 8 is outside this request.
+**Engineering/release — pending**
+- [ ] Implement normalized testcase result mapping, aggregation and transaction.
+- [ ] Verify schema fields/indexes against Modules 5/6.
+- [ ] Pin deployed Judge0 CE version/config and contract-test statuses/comparator behavior.
+- [ ] Implement server-side hidden-result masking across REST/WebSocket/events/exports/logs/errors.
+- [ ] Implement append-only run history and SUPER_ADMIN rejudge.
+- [ ] Integrate Modules 4/8/9/11, 13, 15, 17 and 18.
+- [ ] Configure output caps, retention and monitoring thresholds.
+- [ ] Execute 200 QA cases plus concurrency/fault/security/load tests.
+
+**Approval boundary:** product decisions are adopted. Schema, runtime, deployment verification, integrations and QA execution remain incomplete.
+
+## 30. Adopted decision register
+
+All EVAL-D01–EVAL-D27 are adopted and recorded in ADOPTED-DECISIONS.md. They resolve contexts, immutable testcase snapshots, equal-weight scoring, verdict precedence, hidden-data confidentiality, role-scoped access, Option B persistence, append-only rejudge history, grading events, retention and monitoring.
+
+## 31. Normative evaluation algorithm
+
+1. Resolve CodeSubmission and its immutable ProblemVersion. Validate its single activity context through the owner module.
+2. Resolve the complete ordered ProblemVersionTestCase set. An empty or inconsistent set is a configuration failure.
+3. Build one Judge0 execution per testcase using server-controlled source, canonical language key, testcase input/expected output and pinned resource limits.
+4. Maintain one JudgeRun per testcase under the active SubmissionRun. Correlate tokens to stable testcase IDs, never array order.
+5. Poll all tokens using Module 6 asynchronous policy. All official cases are allowed to finish; one code failure does not short-circuit remaining cases.
+6. Only terminal mapped student-code outcomes enter aggregation. Missing, pending, unknown or infrastructure outcomes leave the run incomplete/FAILED with null verdict and score.
+7. For complete results, count all official cases equally. scorePercent = Math.round(100 × passedCaseCount / totalOfficialCaseCount), integer 0–100. ACCEPTED requires every official testcase to pass. Otherwise apply TLE > MLE > CE > RE > WA regardless of testcase order. MLE only when deployed mapping verifies it. No PARTIAL verdict exists in v1.
+8. Persist normalized JudgeRun outcomes and aggregate SubmissionRun result transactionally. Update parent summary only after commit. Emit SubmissionGraded through the outbox after commit.
+
+## 32. Result privacy, history and access contract
+
+- Visible testcase results may return approved safe details; hidden testcase result entries and metadata are omitted from Student DTOs. Hidden count/order, status, pass/fail, ordinal, timing, memory, input, expected/actual output, stderr and compiler output are not Student-visible.
+- Student retrieves own source and safe result only. HOD/Manager receive scoped summary DTOs only. SUPER_ADMIN raw access is privileged and audited. Finance has no Module 7 access.
+- REST, WebSocket, exports, events, errors and logs apply the same server-side allowlist/masking.
+- CodeSubmission → SubmissionRun → JudgeRun is the only canonical persistence. Historical runs are append-only. Rejudge is SUPER_ADMIN-only, reason-required, uses original ProblemVersion and consumes no Student attempt.
+- Failed/incomplete rejudge does not erase the last completed grade. Downstream score/rank/progress effects are handled by activity owners after the canonical event.
+
+## 33. Cross-module and release gates
+
+| Module | Contract |
+|---|---|
+| 5 — Problem Management | Immutable ProblemVersion, ordered TestCase snapshot, isHidden, resource limits and language keys |
+| 6 — Code Submission & Judge0 | CodeSubmission/SubmissionRun/JudgeRun, async tokens/statuses, processing lifecycle, outbox and SUPER_ADMIN rejudge |
+| 4 — Course & Enrollment | Validate Course association/enrollment; consume committed SubmissionGraded idempotently for progress |
+| 8 — Labs & Lab Scoring | Map problem-level score using Lab-owned maxScore/late/attempt policies |
+| 9 — Assessments | Own assessment window, attempt rules, aggregate and result-release policies |
+| 10 — Groups | Validate group membership where required |
+| 11 — Contests | Own points, penalties, leaderboard and rank updates |
+| 13 — Notifications | Resolve recipients/templates/channels for committed graded/regraded events |
+| 15 — Audit Logging | Audit privileged raw inspection, rejudge and correction without hidden content |
+| 17/18 — State/Edge Cases | Own lifecycle transitions, stuck-job detection, retries, partial batches and recovery |
+
+**Release gate:** pin deployed Judge0 CE version/config; contract-test status mapping, language/config endpoints, batch token mapping and comparator whitespace behavior; then execute all 200 QA cases plus security, concurrency, fault-injection and load tests. These engineering actions remain pending.
