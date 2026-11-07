@@ -1,6 +1,6 @@
 # DEZOLVER — Module 10 Groups & Membership QA Test Cases
 
-**Version:** 0.2 — companion to Functional Specification Standard v1.0  
+**Version:** 0.3 — legacy Cohort cross-check companion  
 **Status:** Detailed QA draft; product/security decisions remain open  
 **Related:** [Module 10 README](./README.md) · [Function-Level Specifications](./FUNCTION-SPECIFICATIONS.md)
 
@@ -161,7 +161,16 @@
 | GRP-QA-131 | F011 | Group membership used to request another Student's score | Deny unless staff permission/owner module allows | Ownership |
 | GRP-QA-132 | F011 | Owning module unavailable | Apply shared partial-load/error behavior; TBD | Module 18 |
 
+| GRP-QA-133 | F001 | Compare historical `GET /tenants/:id/cohorts` route with target Group list | Cohort route/data is not accepted as a Group API; Group list reads target Group records with role/scope filters | LEGACY-SPEC-REPORTED / target boundary |
+| GRP-QA-134 | F003 | Compare target Group create payload with legacy `CreateCohortDto` | Do not require `academicYear` or silently impose the Cohort 2–80 name rule; use target Group schema and approved Group validation only | Legacy distinction / Group schema |
+| GRP-QA-135 | F006/F007 | Student attempts target inviteCode join using legacy email-invitation token/cohortId path | Invitation token/cohortId is not a Group invite code; only the target Group inviteCode workflow may initiate Group join | Legacy distinction / GRP-D08 |
+| GRP-QA-136 | F007/F008 | Invitation is marked accepted but no GroupMember is written | Do not report successful Group join; target membership succeeds only when the authorized GroupMember operation is persisted | Legacy defect avoidance / recommendation |
+| GRP-QA-137 | F008 | Membership implementation attempts to replace GroupMember with scalar `User.cohortId` | Reject Cohort scalar mapping; use target GroupMember relation. Multiple-Group and membership-history outcomes remain decision-bound | Legacy distinction / GRP-D06/D17 |
+| GRP-QA-138 | F009 | Group is linked to Lab/Contest using Cohort or syllabus-overlay record | Use target GroupLab/GroupContest relations; do not infer participation, submissions, scores, or ranks from the Group link | Target schema / Module 8 / Module 11 |
+| GRP-QA-139 | F010 | Group Course Problem is persisted as legacy Cohort SyllabusOverlay | Use target GroupCourseProblem; do not mutate SyllabusOverlay, CourseProblem, or CourseEnrollment as a side effect | Target schema / Module 4 |
+| GRP-QA-140 | F011 | Group access is granted solely because JWT contains `cohort_id` or socket joins `cohort:<id>` | Group access must use authenticated role, current Group scope/membership, and owning activity authorization; legacy cohort claims/rooms are not proof of Group membership | Legacy defect avoidance / RBAC / Module 9 |
+
 ## QA coverage summary
-- 132 cases cover GRP-F001–GRP-F011.
-- Coverage includes role/scope, CRUD, membership, invite code, activity associations, privacy, cross-module access, concurrency, retries, and schema gaps.
+- 140 cases cover GRP-F001–GRP-F011 (GRP-QA-001–132 existing target scenarios; GRP-QA-133–140 distinguish historical Cohort behavior from target Group requirements).
+- Coverage includes role/scope, CRUD, membership, invite code, activity associations, privacy, cross-module access, concurrency, retries, schema gaps, and regression boundaries against the historical Cohort specification. These cases are defined only and have not been executed.
 - Decision-blocked expected results remain intentionally open for later product review.

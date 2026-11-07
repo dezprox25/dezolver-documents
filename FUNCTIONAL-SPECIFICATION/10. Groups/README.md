@@ -1,10 +1,10 @@
 # DEZOLVER — Module 10: Groups & Membership
 
 **Document ID:** DEZ-GRP-FS-001  
-**Version:** 0.2 — expanded function-level spec + QA companion  
+**Version:** 0.3 — legacy Cohort cross-check + target Group reconciliation  
 **Document status:** Detailed draft — aligned to Functional Specification Standard v1.0; recommendations and product/security decisions remain open  
 **Approval status:** Not approved for implementation  
-**Prepared:** 2026-11-04
+**Prepared:** 2026-11-07
 
 > Committing this document versions the specification. It does not approve the target behavior. Source-confirmed facts, derived requirements, and recommendations are distinguished throughout.
 
@@ -43,20 +43,41 @@ The module covers Group lifecycle, membership, invite-code join, activity associ
 | [Page-to-DB Mapping v2](../../docs/source-text/Page%20-%20DB%20Mapping%20v2.md), original pages 2–3 | HOD Groups, Manager Groups/Classes, Student My Groups page mappings. |
 | [Schema](../../docs/source-text/scheema.md) | Group, GroupMember, GroupLab, GroupContest, GroupCourseProblem, Assessment.groupId. |
 | [Functional Specification Standard](../FUNCTIONAL-SPECIFICATION-STANDARD.md) | Evidence labels, function-level requirements, decision log, review and approval process. |
+| [Historical Module 10 Cohort specification](../../functional-spec-from-old%20code/module-10-groups/SPECIFICATION.md) and [legacy summary](../../functional-spec-from-old%20code/module-10-groups/README.md) | Historical Cohort model, list/create, invitations, roster import, syllabus overlays, WebSocket behavior, reported defects, and explicit absence of target Group implementation. |
 
 **Evidence limitations**
 - Business Flow v2 does not define detailed Group CRUD, membership lifecycle, invite-code lifecycle, or deletion behavior.
 - Page-to-DB Mapping identifies data entities; it does not establish exact UI behavior.
 - Conceptual schema is not proof of deployed implementation or database constraints.
 - RBAC Group permission rows conflict for MANAGER and differ in Student wording.
-- No legacy implementation behavior is verified here.
+- The old-code folder contains a Module 10 forensic specification marked `COMPLETED & FORENSICALLY VERIFIED`. It describes the historical implementation as `Cohort` under `Tenant`, not the target `Group` model. This review inspected that historical specification artifact and its reported findings; it did **not** independently retrieve the underlying legacy application source files. Legacy details below are therefore labeled **LEGACY-SPEC-REPORTED**, not newly code-verified.
+- The historical specification reports only Cohort list/create endpoints; invitation creation can store `cohortId`, but acceptance does not update `User.cohortId`; CSV ingestion supports `cohortId` in its worker but the controller does not pass it; and JWT serialization omits `cohort_id`, affecting cohort-specific syllabus and WebSocket behavior.
+- The historical specification reports no `Group`, `GroupMember`, `GroupLab`, `GroupContest`, or `GroupCourseProblem` implementation, no many-to-many membership, no direct member-management API, no Group invite-code join, and no Cohort update/delete endpoint. Do not treat legacy Cohort operations as already-implemented Group functions.
 
 Evidence labels:
 - **Source-confirmed:** directly stated in supplied sources.
 - **Derived:** logically follows from multiple source facts.
 - **Recommendation:** proposed target behavior; not approved.
 - **TBD / Decision Required:** requires product/security/technical decision.
+- **LEGACY-SPEC-REPORTED:** a finding stated in the historical forensic specification; attributed to that artifact and not independently reverified against raw legacy source files in this update.
 
+### 3.1 Legacy implementation evidence — Cohort is not Group
+
+The [historical Module 10 specification](../../functional-spec-from-old%20code/module-10-groups/SPECIFICATION.md) describes a legacy `Cohort` subsystem. Its own status says forensic verification was completed; the current review uses it as historical evidence only and does not claim fresh inspection of the application source files it cites.
+
+| Target function | Legacy function / reported implementation | Boundary for target Group module |
+|---|---|---|
+| GRP-F001 — List/filter Groups | `GET /tenants/:id/cohorts`, guarded by `read:cohort`; `id=self` resolves to the principal tenant; repository listing is tenant-filtered. The old frontend's optional `memberCount` was not populated. | Analogue for scoped list behavior only. It is not a Group endpoint or Group dataset. |
+| GRP-F002 — View Group details | No Cohort detail/drill-down route was reported; the Cohort card had no detail action. | No legacy equivalent. Group detail is a target recommendation derived from current page/entity mapping. |
+| GRP-F003 — Create Group | `POST /tenants/:id/cohorts`, guarded by `manage:cohort`; old `CreateCohortDto` uses name (2–80 characters), optional description, optional `academicYear` (≤20), and returns 201. | Analogue for create workflow only. Do not copy the DTO or its validation into Group: target Group schema has different fields and name `varchar(255)`. |
+| GRP-F004 / F005 — Update and lifecycle | No Cohort PATCH/PUT/DELETE endpoint; legacy Cohort has no status/`isActive` column or lifecycle action. | No legacy equivalent. Target Group metadata edit and `isActive` lifecycle remain recommendations pending decisions. |
+| GRP-F006 / F007 — Invite code and join | Legacy `POST /tenants/:id/invitations` stores email, role and optional `cohortId`; this is an email invitation/token flow, not a Group invite-code flow. On acceptance, the old service reportedly updates `acceptedAt` but does not assign `User.cohortId`. | No legacy Group invite-code/join equivalent. Target join must be specified against `Group.inviteCode` and `GroupMember`; the invitation defect must not be repeated. |
+| GRP-F008 — Membership | Legacy membership is a nullable scalar `User.cohortId` (maximum one Cohort per user); no GroupMember join table or direct member add/remove API was reported. CSV worker supports `cohortId`, but the old controller reportedly fails to pass it. | Not a target membership design. `GroupMember` is the target conceptual relation; multiple-Group and leave/removal policy remain open. |
+| GRP-F009 — Lab/Contest links | Historical specification reports no Group, GroupLab, or GroupContest model/operation. | No legacy equivalent. Use target GroupLab/GroupContest source relations and Module 8/11 ownership boundaries. |
+| GRP-F010 — Course Problem link | Historical Cohort syllabus overlay is keyed by `(syllabusId, cohortId, nodeId)` and changes syllabus nodes; no GroupCourseProblem model was reported. | Not equivalent. GroupCourseProblem is the target association; keep CourseProblem and CourseEnrollment policy owned by Module 4. |
+| GRP-F011 — Linked activity / Assessment view | Legacy Cohort behavior included syllabus overlays and cohort WebSocket rooms. The old specification reports missing `cohort_id` JWT claims and a legacy Assessment model without a Group/Cohort association. | These are not Group authorization or activity APIs. Target Group activity visibility must use current Group relationships and owning-module checks; target Assessment.groupId is current conceptual-schema evidence, not legacy behavior. |
+
+**Legacy-to-target rule:** reuse only general lessons that remain valid (tenant/scope filtering, server-side authorization, identity-derived ownership, privacy, idempotency, and explicit failure behavior). Do not port Cohort schema, scalar membership, invitation defects, JWT claim assumptions, or Cohort curriculum/WebSocket semantics into the target Group model.
 ## 4. Terminology
 
 | Term | Definition |
@@ -594,6 +615,9 @@ Recommended entry points: HOD Groups; permitted Manager Groups/Classes; Student 
 | GRP-BR-009 | Group association does not create shared submission/score/rank. | Derived + recommendation |
 | GRP-BR-010 | Invite code is not exposed through general APIs/logs. | Security recommendation |
 | GRP-BR-011 | Each linked activity independently enforces access rules. | Derived from RBAC |
+| GRP-BR-012 | Historical Cohort behavior is not target Group behavior; Group functions must use the target Group relations. | LEGACY-SPEC-REPORTED + target schema |
+| GRP-BR-013 | Legacy invitation acceptance/CSV cohort assignment does not prove GroupMember creation; target membership must be persisted through GroupMember. | LEGACY-SPEC-REPORTED + recommendation |
+| GRP-BR-014 | Cohort syllabus overlays and cohort WebSocket rooms are not substitutes for GroupCourseProblem, GroupLab, GroupContest, or Group membership authorization. | LEGACY-SPEC-REPORTED + target schema |
 
 ## 10. Data and state reference
 
@@ -666,12 +690,12 @@ No Group notification triggers/recipients are defined in sources. Recommendation
 | Module | Dependency |
 |---|---|
 | 1 Authentication & User Lifecycle | Authenticated actor, role, account status |
-| 2 College / Department / Section | Scope hierarchy; Manager scope gap |
+| 2 College / Department / Section | Module 2 explicitly delegates Group-to-Section/Manager scope to Module 10; current Group schema has no `sectionId` or Manager assignment relation, so Manager Group access remains blocked until mapped. |
 | 3 Subscription & Seat Management | Potential student/college eligibility; not defined by Group sources |
-| 4 Course & Enrollment | Course, enrollment, CourseProblem eligibility |
+| 4 Course & Enrollment | GroupCourseProblem must not bypass CourseProblem, CourseSection, or CourseEnrollment eligibility; Module 4 owns Course and enrollment semantics. |
 | 6 Code Submission & Judge0 | Student-owned CodeSubmission |
-| 8 Labs & Lab Scoring | LabAssignment/LabSubmission behavior |
-| 9 Assessments | Assessment.groupId, attempts, timing, individual scores |
+| 8 Labs & Lab Scoring | Module 8 establishes GroupLab as the Group-to-Lab assignment relation and assigns GroupLab association writes to Module 10; submission and score ownership remain Student-level/Module 8. |
+| 9 Assessments | `Assessment.groupId` is present in the target conceptual schema. Module 9 owns eligibility, attempts, timing, and results; its recent decisions were prematurely marked adopted before the whole-system review, so Group membership effects remain subject to the later cross-module decision pass. |
 | 11 Contests | Contest participation/scoring/ranking |
 | 13 Notifications | Notification triggers/recipients |
 | 15 Audit Logging | Canonical event catalog and retention |
@@ -736,7 +760,7 @@ No Group notification triggers/recipients are defined in sources. Recommendation
 
 ## 16. QA coverage summary
 
-Function QA cases GRP-QA-001–049 cover:
+Function QA cases GRP-QA-001–140 cover:
 - role matrix and scope;
 - tenant/department/section/group/ownership checks;
 - Manager permission discrepancy;
@@ -769,5 +793,6 @@ Function QA cases GRP-QA-001–049 cover:
 3. [Page-to-DB Mapping v2](../../docs/source-text/Page%20-%20DB%20Mapping%20v2.md) — HOD Groups, Manager Groups/Classes, Student My Groups.
 4. [Schema](../../docs/source-text/scheema.md) — Group and related entities.
 5. [Functional Specification Standard](../FUNCTIONAL-SPECIFICATION-STANDARD.md) — evidence labels and approval workflow.
+6. [Historical Module 10 Cohort specification](../../functional-spec-from-old%20code/module-10-groups/SPECIFICATION.md) — legacy Cohort functions and reported defects; not target Group implementation.
 
 ---
