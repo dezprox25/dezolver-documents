@@ -1,11 +1,11 @@
 # Module 9 — Assessments: Function-Level Specifications
 
-**Version:** 0.2  
-**Status:** Detailed source-grounded draft — target decisions remain open  
+**Version:** 1.0 — adopted target baseline  
+**Status:** 22 functions retained; target decisions ASMT-D01–D36 adopted; engineering/QA execution pending  
 **Governing standard:** [Functional Specification Standard v1.0](../FUNCTIONAL-SPECIFICATION-STANDARD.md)  
 **Parent module:** [Module 9 — Assessments](./README.md)
 
-> Source-confirmed facts, legacy-verified behavior, derived requirements, recommendations, and TBD decisions remain separate. This document does not approve recommendations or add target schema fields.
+> Evidence and legacy findings remain traceable. The adopted v1 requirements in Section 3 supersede any earlier recommendation or Resolved in adopted target contract (ASMT-D01–ASMT-D36) note. Schema/API implementation and QA execution remain pending.
 
 ## 1. Shared evidence, authorization, and validation rules
 
@@ -23,8 +23,8 @@
 - **[SOURCE—RBAC]** SUPER_ADMIN is global; FINANCE_TEAM is assigned-college and billing-oriented; HOD is College + Department; MANAGER is College + Department + assigned Section/permitted Group; STUDENT is own records + permitted academic resources.
 - **[SOURCE—RBAC]** Assessment matrix: SUPER_ADMIN V/C/U/D; FINANCE_TEAM —; HOD V/C/U/D; MANAGER V/C/U*; STUDENT V/ATTEMPT. Asterisk means additional scope restriction.
 - Assessment page visibility does not override role, scope, or ownership.
-- **[RECOMMENDATION]** Backend authorization is required for every operation. Never rely on UI hiding or client-supplied College/Department/Group/Student IDs.
-- The source RBAC does not separately define publish, cancel, archive, re-evaluate, score adjustment, integrity review, or export rights. Those action-level permissions are TBD.
+- **[ADOPTED]** Backend authorization is mandatory for every operation. Never rely on UI hiding or client-supplied College/Department/Group/Student IDs.
+- Adopted action-level permissions are narrower than broad CRUD: HOD/SUPER_ADMIN own publish/archive/release; Manager is draft-only; Finance denied; rejudge is SUPER_ADMIN-only; manual score override/export disabled in v1.
 
 ### 1.3 Conceptual data reference
 **[SOURCE—SCHEMA]** Assessment fields: id, collegeId, departmentId, groupId, createdById, title (varchar 255), description (text), type (AssessmentType), durationMinutes (int), passingPercentage (decimal 5,2), startsAt, endsAt, status (PublishStatus), createdAt, updatedAt.
@@ -49,11 +49,11 @@
 | ASMT-F002 | Create Assessment draft | SUPER_ADMIN, HOD, MANAGER | Create action | Create | Draft |
 | ASMT-F003 | View/edit Assessment configuration | Authorized staff | Assessment record | Read/Update | Draft |
 | ASMT-F004 | Add/remove/order Problems | Authorized staff | Problem configuration | Workflow | Draft |
-| ASMT-F005 | Configure assignment and eligibility | Authorized staff | Assignment configuration | Workflow | Decision required |
+| ASMT-F005 | Configure assignment and eligibility | Authorized staff | Assignment configuration | Workflow | Adopted target policy |
 | ASMT-F006 | Publish Assessment | Authorized staff | Publish action | Lifecycle | Decision required |
 | ASMT-F007 | Archive/cancel/reschedule Assessment | Authorized staff | Lifecycle actions | Lifecycle | Decision required |
 | ASMT-F008 | Browse Student Assessments/details | STUDENT | Student Assessments page | Read | Draft |
-| ASMT-F009 | Start Assessment attempt | STUDENT | Start action | Workflow | Attempt policy TBD |
+| ASMT-F009 | Start Assessment attempt | STUDENT | Start action | Workflow | Attempt policy defined in ASMT-D01–ASMT-D36 |
 | ASMT-F010 | Resume active workspace | STUDENT | Workspace | Workflow | Resume policy TBD |
 | ASMT-F011 | Submit code for Assessment Problem | STUDENT | Submit action | Submit | Modules 6/7 |
 | ASMT-F012 | Enforce deadline/expiry | System | Start/timer/submit | System | Timing TBD |
@@ -117,7 +117,7 @@
 
 ### ASMT-F004 — Add/remove/order Assessment Problems
 **Requirement status:** [SOURCE—SCHEMA] AssessmentProblem association; [DERIVED] multi-Problem ordered list  
-**Specification status:** Draft / design decisions open | **Actors:** authorized Assessment editors
+**Specification status:** Draft / adopted target policy | **Actors:** authorized Assessment editors
 
 - **Purpose:** Configure Problem membership/order.
 - **Permissions/preconditions:** Assessment update permission; selectable Problems exist and are in permitted scope; Assessment content state allows changes.
@@ -424,3 +424,35 @@ These are gaps—not implicit additions to the target schema.
 - [ ] Module 6/7/13/15/17/18 contracts aligned.
 
 **Status:** Detailed function-level draft authored. Decisions intentionally remain open; this module is not implementation-ready.
+
+## 3. Adopted v1 target contract
+
+These rules are normative for ASMT-F001–ASMT-F022. Earlier function-level recommendations/TBD descriptions are source-review history and must be interpreted through this section and ADOPTED-DECISIONS.md.
+
+### 3.1 Roles and audience
+- SUPER_ADMIN global. HOD full Assessment administration within College+Department. MANAGER view/create/update drafts only in assigned Section/permitted Group; no publish/archive/delete. FINANCE_TEAM denied. STUDENT view/attempt and own released result only.
+- Assessment is College+Department owned. One optional groupId and AssessmentSection rows determine targeting; absent Section rows means active Sections in Department. Group membership is additional; active Course enrollment is not required because Assessment has no courseId in conceptual schema.
+- Active membership, College, Section and Group relationships are rechecked at list/detail/start. Removal blocks future starts, not an existing attempt.
+
+### 3.2 Content, lifecycle and revisions
+- CODING only. Multi-Problem AssessmentProblem set; one or more Problems, all required; no duplicate Problem; orderIndex zero-based contiguous; no weights, optional Problems, randomization or per-Problem points.
+- DRAFT→PUBLISHED→ARCHIVED; restore to DRAFT. HOD/SUPER_ADMIN lifecycle authority. No hard delete. Each publish creates AssessmentRevision and AssessmentRevisionProblem snapshots pinned to published Module 5 ProblemVersion.
+- Changing Problem list/order, ProblemVersion, audience, timing, duration, attempts, threshold, integrity or result policy requires a new revision. Existing attempts remain on their original revision.
+
+### 3.3 Attempt, submission and timing
+- AssessmentAttempt is one full multi-Problem session. Successful explicit Start creates and consumes one attempt; opening details/workspace does not. Resume reuses the same active attempt/deadline. maxAttempts defaults to 1; count server-side accepted attempt rows.
+- Each AssessmentAttempt has one AssessmentAttemptProblem per revision Problem. Multiple CodeSubmissions per Problem are retained; best complete Module 7 result wins, latest accepted submission breaks ties.
+- CodeSubmission context=ASSESSMENT and contextId=AssessmentAttempt.id. Module 6 owns CodeSubmission/SubmissionRun/JudgeRun; Module 7 owns testcase evaluation.
+- Server clock is authoritative. Attempt deadline=min(startedAt+durationMinutes, endsAt when present); due boundary inclusive. No pause, individual extension or auto-submit of unsent browser code. Assessment duration is not a Judge0 CPU limit.
+- At Finish/expiry unanswered Problems contribute 0. Pending/infrastructure-failed submitted Problems block finalization; do not convert those outcomes to 0.
+
+### 3.4 Scoring and release
+- AssessmentAttempt score is equal mean of all Problem percentages, unanswered=0; round half-up to two decimals. passingPercentage defaults 50.00 and range is 0–100; equality passes.
+- Official score is the highest finalized valid attempt; latest started attempt breaks ties. Preserve all prior attempts/results.
+- Result release defaults AFTER_CLOSE; optional IMMEDIATE_SAFE or STAFF_RELEASE. Student always sees receipt/pending, but score/pass only when release gate is satisfied. Hidden Module 7 data remains masked.
+- No manual score override in v1. Rejudge follows Modules 6/7: SUPER_ADMIN, reason required, new SubmissionRun on original ProblemVersion, no new AssessmentAttempt.
+
+### 3.5 Integrity, privacy and integration
+- Integrity telemetry off by default; if enabled, disclosed tab/window blur and paste counts/timestamps are review-only and cannot auto-fail or terminate a Student.
+- HOD/Manager scoped summary only; raw source/JudgeRun requires audited SUPER_ADMIN access. Finance has no Assessment access.
+- Notifications, audit, analytics, lifecycle and recovery use Modules 13, 15, 16, 17 and 18. Events are outbox-backed and contain no source, raw Judge0 token or hidden testcase content.

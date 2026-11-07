@@ -1,12 +1,12 @@
 # 9. Assessments
 
 **Document type:** Functional Specification  
-**Version:** 0.2 — Detailed draft aligned to Functional Specification Standard v1.0  
-**Status:** Detailed source-grounded draft — product/architecture/security decisions remain open  
+**Version:** 1.0 — Adopted target baseline  
+**Status:** Product/architecture/security decisions adopted (ASMT-D01–ASMT-D36); engineering and QA execution pending  
 **Module owner:** DEZOLVER Academic Activities / Assessments  
 **Related modules:** College / Department / Section Management, Course & Enrollment, Problem Management, Code Submission & Judge0, Test Case Evaluation, Labs & Lab Scoring, Groups, Contests, Notifications, Audit Logging, Student Analytics, Functional State Machines, Edge Cases & Failure Handling
 
-> **Interpretation rule:** This specification separates approved conceptual source documents, verified legacy-code audit facts, and proposed target behavior. Legacy behavior is evidence about the old implementation—not an automatic requirement for DEZOLVER. Recommendations are not approved product rules until the product owner confirms them.
+> **Adopted target baseline:** Conceptual source fields, verified legacy-code audit facts and adopted target behavior remain distinguished. All 36 ASMT-D decisions are now adopted. Sections 26–31 and ADOPTED-DECISIONS.md are normative and supersede earlier recommendation/TBD annotations. Engineering implementation and QA execution remain pending.
 
 ## 1. Purpose
 
@@ -71,7 +71,7 @@ The conceptual AssessmentProblem association includes assessmentId, problemId, o
 - MANAGER: College, Department, Section/Group
 - STUDENT: own or authorized data
 
-The RBAC source does not fully specify Assessment action permissions. Create, edit, publish, assign, archive, review, score adjustment, and report permissions remain to be mapped.
+The RBAC source grants SUPER_ADMIN/HOD V/C/U/D, MANAGER V/C/U* and STUDENT V/ATTEMPT; Finance is denied. Module 9 resolves lifecycle/release/rejudge to narrower actions in ASMT-D01/D10/D24/D27/D28.
 
 ### 2.5 Related module boundaries
 
@@ -189,15 +189,15 @@ The old code used individual user submissions and had no Group-based Assessment 
 
 ## 5. Actors and permissions
 
-The following is a proposed action-level mapping based on the general RBAC scope. It requires confirmation against the target RBAC matrix.
+The following target action-level mapping reconciles the supplied RBAC matrix with least-privilege scope. Publish/release/rejudge actions are narrower than general CRUD.
 
 | Role | Proposed Assessment access |
 |---|---|
-| SUPER_ADMIN | Global administrative access, subject to audit |
-| HOD | Manage/review Assessments within authorized College/Department scope |
-| MANAGER | Manage/review Assessments within authorized College/Department/Section/Group scope |
-| STUDENT | View assigned Assessments, start eligible attempts, submit code, and view permitted results |
-| FINANCE_TEAM | No academic Assessment access by default |
+| SUPER_ADMIN | Global manage, lifecycle and audited privileged raw inspection |
+| HOD | Create/view/update/publish/archive within assigned College+Department; scoped review |
+| MANAGER | View/create/update drafts within assigned Section/permitted Group; no lifecycle/Delete |
+| STUDENT | View eligible Assessments, start/submit own attempts, and view released own results |
+| FINANCE_TEAM | No Assessment access |
 
 ### 5.1 Authorization requirements
 
@@ -302,9 +302,7 @@ Steps 4–8 depend on product decisions. The UI should not expose unapproved pol
 
 Conceptual sources support multiple Problems via AssessmentProblem. The legacy system supported one Problem only.
 
-**[RECOMMENDATION]** Use the conceptual multi-Problem association as the target direction, subject to product confirmation. Do not impose the legacy one-Problem limitation by default.
-
-**Open decision:** Should Problem content be frozen at publish time or at each Student's start? See D7.
+**Adopted:** use the conceptual multi-Problem AssessmentProblem junction, ordered by zero-based orderIndex. Each published Assessment revision pins each Problem's published Module 5 ProblemVersion; see ASMT-D03–D05 and D11–D13.
 
 ## 8. Assignment and eligibility
 
@@ -320,7 +318,7 @@ The conceptual Assessment includes collegeId, departmentId, and groupId. The sou
 - Individual Student assignment
 - Department/Section-wide assignment
 
-**[RECOMMENDATION]** Start with Group assignment if consistent with the Group module; decide multi-Group assignment before schema design. Avoid creating per-Group copies if one shared Assessment identity and results/reporting are required.
+**Adopted:** one optional groupId plus explicit AssessmentSection rows. Individual Student assignment and multiple Groups per Assessment are deferred in v1; Module 10 remains the authority for Group membership.
 
 ### 8.3 Membership changes
 
@@ -330,7 +328,7 @@ The conceptual Assessment includes collegeId, departmentId, and groupId. The sou
 - Removed Students should not start new attempts.
 - Historical attempts/results remain retained.
 
-This is not an approved policy; see D2.
+Adopted by ASMT-D07/D08: eligibility is rechecked at list/detail/start; membership removal blocks new starts but does not invalidate an active attempt.
 
 ## 9. Assessment lifecycle
 
@@ -351,7 +349,7 @@ No additional persisted status is source-confirmed.
 | PUBLISHED | Assigned/eligible Students may access it according to schedule |
 | ARCHIVED | Historical record retained; no new starts |
 
-**[RECOMMENDATION]** Model cancellation/closure separately from archival if cancellation is a real use case. Avoid deleting Assessment history.
+Adopted by ASMT-D09/D10: DRAFT/PUBLISHED/ARCHIVED only, archive is history-only, restore to DRAFT and no hard delete.
 
 ### 9.3 Editing after publication
 
@@ -361,7 +359,7 @@ No additional persisted status is source-confirmed.
 - Published Assessment immutable; clone to change
 - Permit limited metadata/date edits while locking Problem/scoring content
 
-**[RECOMMENDATION]** Lock evaluated content after the first Student starts; permit carefully controlled metadata changes. Preserve an explicit revision/history.
+Adopted by ASMT-D11–D13: every publish creates an immutable AssessmentRevision; any published content/configuration change requires a new draft revision and republish.
 
 ## 10. Student Assessment workflow
 
@@ -438,7 +436,7 @@ Use server-authoritative timing:
 - Assessment duration must not be reused as Judge0 CPU time limit; execution limits belong to Problem/Judge configuration.
 - Deadline and grace-period logic should be explicit and testable.
 
-**Recommended policy to consider:** Student's deadline is the earlier of start + duration and Assessment endsAt. This recommendation requires approval.
+Adopted by ASMT-D14–D16: server-authoritative deadline is min(server start + duration, revision endsAt when present); submissions are accepted at the inclusive deadline.
 
 ### 11.4 Expiry and autosubmit
 
@@ -472,7 +470,7 @@ Suggested semantics:
 - Do not count re-evaluation as a new Student attempt.
 - Store attempt number and timestamps on the parent attempt.
 
-This recommendation requires product approval and schema design.
+Adopted by ASMT-D18/D19/D33: one AssessmentAttempt represents a full session; maxAttempts defaults to 1 and is counted on successful Start.
 
 ## 13. Evaluation and scoring
 
@@ -498,24 +496,19 @@ The conceptual AssessmentProblem association has orderIndex but no source-confir
 - Sum of Problem points
 - Another aggregation rule
 
-**[RECOMMENDATION]** Use equal-weight normalized percentage for the initial release unless unequal Problem weights are a required business use case. If weights are needed, add weight to the AssessmentProblem association explicitly.
+Adopted by ASMT-D05/D21: all AssessmentProblems are required and equally weighted; Assessment score is the arithmetic mean of their selected Module 7 percentages.
 
 ### 13.4 Passing threshold
 
 The conceptual model includes passingPercentage. Legacy code did not enforce an Assessment-level pass threshold.
 
-**[RECOMMENDATION]**
-- Assessment score is normalized to 0–100.
-- Pass when final score >= passingPercentage.
-- Keep passingPercentage separate from Problem-level evaluation.
-- Define behavior for unanswered Problems, incomplete evaluation, and zero-weight/invalid configuration.
-- Do not finalize pass/fail until the official attempt score is selected.
+Adopted by ASMT-D17/D21/D22: score is normalized 0–100; unanswered Problems count as 0; pending/infrastructure-failed Problems block finalization; pass when final score >= passingPercentage.
 
 ### 13.5 Final score across attempts
 
 **[OPEN DECISION]** Highest, latest, first, average, or another attempt score?
 
-**[RECOMMENDATION]** Highest completed valid attempt as the official score, while preserving every attempt. This is a proposed policy, not a source-confirmed rule.
+Adopted by ASMT-D23: highest finalized valid AssessmentAttempt is official; latest started attempt breaks ties. Preserve all attempt results.
 
 ### 13.6 Partial credit and evaluation failures
 
@@ -576,7 +569,7 @@ Authorized staff may need:
 - Downstream pass/fail and reports should reflect the approved final score.
 - Notify Student if score/result changes, subject to notification policy.
 
-These are recommendations pending decision.
+Adopted by ASMT-D27/D28: rejudge is SUPER_ADMIN-only under Modules 6/7; manual score override is disabled in v1.
 
 ## 16. Integrity / anti-cheating
 
@@ -629,7 +622,7 @@ CSV export is a product decision. Reports must enforce HOD/Manager scope and sho
 
 The source does not establish whether Assessment completion affects Course progress, certificates, or other academic progress indicators.
 
-**[OPEN DECISION]** Define whether Assessment completion/score contributes to course completion, progress, certificate eligibility, or gradebook. Do not infer from CodeSubmission existence.
+Adopted by ASMT-D30: Assessment completion does not automatically update CourseEnrollment.completedAt, Course progress, certificates or seat usage.
 
 ## 18. Notifications
 
@@ -645,7 +638,7 @@ Potential events:
 - Results released
 - Score adjusted/re-evaluated
 
-**[RECOMMENDATION]** Support publication/assignment and result-release notifications in the initial Assessment workflow. Reminder timing and channels follow Module 13.
+Adopted by ASMT-D31: Module 9 emits safe committed events; Module 13 owns recipients, templates, channels, reminders and delivery.
 
 ## 19. Edge cases and failure handling
 
@@ -735,42 +728,39 @@ These are proposed acceptance criteria; unresolved policy-dependent behavior mus
 | AS-23 | Assessment cancelled after start | Active attempt behavior follows cancellation policy |
 | AS-24 | Notification event fails | Assessment state remains correct; notification can recover |
 
-## 22. Genuine product decisions
+## 22. Adopted product and architecture decisions
 
-The detailed options, decision log, and function-level specifications are maintained in [Function-Level Specifications](./FUNCTION-SPECIFICATIONS.md). Main decisions required before target implementation are:
+All previously open Assessment decisions are resolved in ASMT-D01–ASMT-D36. No product/architecture/security decision remains open in Module 9.
 
-1. Assignment scope: one Group, multiple Groups, or Group plus individual assignment.
-2. Group membership snapshot/live eligibility and behavior for active attempts.
-3. Assessment-specific role/action permissions.
-4. Lifecycle transitions and editing after publication.
-5. Availability window vs per-student duration; late start and expiry.
-6. Attempt model: full Assessment session vs each submission; when attempt is consumed.
-7. Problem content/testcase versioning: freeze on publish or on start.
-8. Problem order/navigation/skip/revisit rules.
-9. Assessment Problem weighting and score aggregation.
-10. Official score across attempts and passing threshold semantics.
-11. Result feedback/release policy.
-12. Manual score adjustment and re-evaluation.
-13. Integrity telemetry and consequences.
-14. Student My Assessments dashboard and staff reports/exports.
-15. Assessment notification events.
+| Area | Adopted v1 target |
+|---|---|
+| Role/scope | SUPER_ADMIN/HOD manage; Manager drafts within Section only; Finance denied; Student own access |
+| Assessment content | CODING only; multi-Problem ordered AssessmentProblem; equal weighting, no optional/duplicate Problems |
+| Audience | One College+Department Assessment; optional one Group and explicit Section targets; no individual assignments |
+| Lifecycle/versioning | DRAFT/PUBLISHED/ARCHIVED; immutable AssessmentRevision and pinned ProblemVersions |
+| Attempt | Full AssessmentAttempt session; created at explicit Start; maxAttempts default 1; resume does not consume another |
+| Timer | Server starts timer; deadline=min(start+duration, endsAt); inclusive submission cutoff; no auto-submit unsent editor code |
+| Scoring | Per-Problem Module 7 percent; equal average; unanswered=0; infra/pending blocks finalization; round 2 decimals |
+| Official score | Highest completed valid attempt; latest attempt breaks ties |
+| Result release | AFTER_CLOSE default; IMMEDIATE_SAFE and STAFF_RELEASE optional |
+| Integrity | Minimal telemetry off by default; disclosed review signal only; no automatic penalties or proctoring |
+| Grading | Manual score override disabled; SUPER_ADMIN-only Module 6/7 rejudge |
 
-**Do not treat the recommendations in this draft or checklist as approved choices.** The user’s answers should be recorded before the spec is marked implementation-ready.
+Remaining work is engineering: Assessment revisions/attempt schema, Section audience, role/scope enforcement, server timing, Module 6/7 integration, result release and event/audit wiring.
 
-## 23. Technical recommendations summary
+## 23. Adopted technical baseline summary
 
-1. Prefer a parent AssessmentAttempt representing a full Assessment session if the product supports multiple Problems per Assessment.
-2. Keep Problem-level submissions under the attempt; do not count every Submit click as a new Assessment attempt.
-3. Use server-authoritative start/deadline validation; client timer is display only.
-4. Keep Assessment duration separate from Judge0 execution limits.
-5. Freeze the Problem/testcase revision for published assessments or each attempt to ensure grading reproducibility.
-6. Reuse Module 7 evaluation and scoring; Assessment owns aggregation and pass/fail policy only.
-7. Preserve submission/evaluation/score history; manual adjustments must be auditable.
-8. Apply backend authorization for Student eligibility, staff scope, result release, and report access.
-9. Treat integrity signals as review evidence, not automatic proof or disqualification.
-10. Resolve architecture decisions D1, D5, D6, D7, D9, and D10 before finalizing schema/API contracts.
+1. Add AssessmentRevision + AssessmentRevisionProblem and pin every ProblemVersion at publish.
+2. Add AssessmentAttempt + AssessmentAttemptProblem to model one timed multi-Problem session per Student attempt.
+3. Keep CodeSubmission → SubmissionRun → JudgeRun canonical; Assessment CodeSubmission context=ASSESSMENT/contextId=AssessmentAttempt.id.
+4. Enforce server-authoritative deadlines; never map Assessment duration to Judge0 CPU/memory limits.
+5. Use Module 7 integer Problem percentage; Assessment applies equal-weight average and separate passingPercentage.
+6. Preserve attempt, evaluation and score history; rejudge is not another Student attempt.
+7. Enforce HOD/Manager Section/Department scope, Group membership, Student ownership and release policy in backend APIs.
+8. Treat integrity signals as disclosed review evidence only.
+9. Integrate Modules 13/15/16/17/18 for notifications, audit, analytics, state and recovery.
 
-## 24. Function-level specification and QA companion\n\n- [Function-Level Specifications](./FUNCTION-SPECIFICATIONS.md) — ASMT-F001–ASMT-F022, inputs, permission/scope, preconditions, entry points, main flows, business rules, validation, data behavior, failure paths, acceptance criteria, and architecture gaps.\n- [QA Test Cases](./QA-TEST-CASES.md) — 158 scenarios ASMT-QA-001–ASMT-QA-158.\n\n## 25. Source references
+## 24. Function-level specification and QA companion\n\n- [Function-Level Specifications](./FUNCTION-SPECIFICATIONS.md) — ASMT-F001–ASMT-F022, inputs, permission/scope, preconditions, entry points, main flows, business rules, validation, data behavior, failure paths, acceptance criteria, and architecture gaps.\n- [QA Test Cases](./QA-TEST-CASES.md) — 188 scenarios ASMT-QA-001–ASMT-QA-188.\n\n## 25. Source references
 
 ### Conceptual source documents
 - Business Flow v2: `docs/source-text/Business Flow v2.md`
@@ -791,4 +781,109 @@ The detailed options, decision log, and function-level specifications are mainta
 
 ---
 
-**Review checkpoint:** Module 9 has been expanded with detailed function specifications and QA coverage. Product decisions remain open. Continue to the next module according to the user's all-modules-first workflow; do not pause to resolve the decision log at this stage.
+**Review checkpoint:** ASMT-D01–ASMT-D36 are adopted; 22 function specs and 188 QA target cases are defined. Engineering and QA execution remain pending.
+
+## 26. Adopted target contract and authority
+
+Earlier sections preserve conceptual source evidence and verified legacy audit facts. Where an earlier recommendation/TBD differs, Sections 26–31 and ADOPTED-DECISIONS.md are normative for v1. Legacy defects are not target requirements.
+
+## 27. Assessment audience, roles and lifecycle
+
+### Audience and eligibility
+- Assessment belongs to one College and Department. A single optional groupId and zero or more AssessmentSection rows define the audience. With no AssessmentSection rows, the entire active Section audience of the owning Department is eligible; when rows exist, only listed active Sections qualify.
+- When groupId is set, active Group membership is an additional eligibility requirement. Group membership does not replace College/Department/Section checks. Individual Student assignment and multi-Group Assessment assignment are out of v1.
+- Eligibility requires active Student membership, active College, active included Section and an active same-College/Department Group when assigned. CourseEnrollment is not required because the conceptual Assessment has no courseId.
+- Recheck eligibility at list, detail and Start. A membership change after an attempt starts does not invalidate that attempt; the Student cannot start a new attempt after removal. Keep the Student's historical records read-only.
+- HOD is limited to assigned College+Department. Manager is limited to assigned College+Department+Section/permitted Group and can only create/update drafts; cannot publish/archive/delete. Finance has no Assessment access.
+
+### Lifecycle
+- AssessmentType is CODING only. Create in DRAFT; publish only after required fields, Problem set, audience, schedule and ProblemVersion readiness pass. PUBLISHED is schedule- and eligibility-gated. ARCHIVED is history-only and blocks new starts/submissions.
+- SUPER_ADMIN/HOD control publish/archive/restore; restore returns to DRAFT. No hard delete and no separate CANCELLED/EXPIRED persisted status in v1.
+- Every publish creates an immutable AssessmentRevision snapshot. Any change to Problems/order, ProblemVersion, audience, timing, duration, attempts, threshold, integrity or result policy requires a new draft revision and publish. Existing attempts retain the revision they started with.
+
+### Problem set
+- Use multi-Problem AssessmentProblem semantics. The published revision contains one or more Problems; all are required. Duplicates are rejected. orderIndex is zero-based, unique and contiguous. No randomized ordering, Problem weights, optional Problems or per-Problem points in v1.
+- Each revision Problem pins a published Module 5 ProblemVersion from the same College. An archived/newer Problem version does not alter a previously published Assessment revision.
+
+## 28. Attempt, timing and submission contract
+
+### Session attempt
+- One AssessmentAttempt represents one Student's entire multi-Problem sitting. Attempt is created transactionally on successful explicit Start; opening details/workspace does not consume an attempt. maxAttempts defaults to 1 and may be configured as a positive integer per revision.
+- One active attempt per Student+Assessment. Refresh/reconnect resumes the same AssessmentAttempt and deadline; it never consumes a new attempt. Client-supplied attempt number/counter/time is never authoritative.
+- Each attempt contains one AssessmentAttemptProblem per revision Problem. A Student can submit a Problem multiple times during the active attempt, subject to Module 6 Idempotency-Key/rate limits. All CodeSubmissions remain in history.
+- For a Problem, select the highest complete Module 7 percentage among its submissions; latest accepted submission breaks ties. Rejudge does not create an AssessmentAttempt or change attempt count.
+
+### Server-authoritative timing
+- startsAt and endsAt are optional UTC timestamps. Null startsAt means startable immediately after publish; null endsAt means no global close. If both exist, startsAt must precede endsAt.
+- Explicit Start is accepted at/after startsAt and strictly before endsAt. Server records startedAt and deadlineAt=min(startedAt+durationMinutes, endsAt when present). Submission acceptance is inclusive at deadlineAt.
+- Timer display uses server-derived remaining time; browser/localStorage countdown cannot extend a session. Pause and individual time extensions are not supported in v1.
+- At Finish/deadline, lock the attempt. Do not auto-submit unsent browser/editor code. Retain the last accepted CodeSubmission per Problem; an unanswered Problem contributes 0. Accepted submissions awaiting Module 7 remain pending; infrastructure failures are RECOVERY_REQUIRED, not 0.
+- Assessment duration is never passed to Judge0 as CPU/memory limits. ProblemVersion's Module 5/6 limits apply to each execution.
+
+## 29. Assessment scoring, result release and integrity
+
+### Score and pass
+- Module 7 owns per-Problem testcase execution/verdict and returns an integer evaluation percentage. Module 9 selects the best completed submission per Problem within the attempt.
+- Attempt score is the equal arithmetic mean of selected percentages for every Problem in the revision, with unanswered Problems treated as 0 after Finish/deadline. Round half-up once to two decimals.
+- A pending/incomplete/unknown/infrastructure evaluation for an accepted submission blocks final attempt finalization until recovered/reconciled; it is not converted to 0. A completed 0% code result is valid and contributes 0.
+- passingPercentage is decimal 0.00–100.00, default 50.00. A finalized attempt passes when scorePercent >= passingPercentage; equality passes.
+- Official Assessment score is the highest finalized valid attempt; the latest started attempt breaks ties. Preserve all attempts; do not average attempts.
+
+### Result release
+- resultReleasePolicy values: AFTER_CLOSE (default), IMMEDIATE_SAFE, STAFF_RELEASE.
+- Student always sees attempt receipt and processing state. AFTER_CLOSE exposes final score/pass only once endsAt has passed and all evaluations are final; where endsAt is null, HOD/SUPER_ADMIN must release explicitly. STAFF_RELEASE requires explicit HOD/SUPER_ADMIN action. IMMEDIATE_SAFE exposes only the Student's own safe finalized result after evaluation.
+- Hidden testcase inputs/outputs/status/count/order/diagnostics and raw Judge0 data remain protected under Module 7. HOD/Manager views are scoped summaries only; source code/raw JudgeRun is SUPER_ADMIN privileged/audited.
+
+### Integrity
+- Integrity signals are OFF by default. If enabled in a published revision, display notice before Start and collect only tab/window blur and paste counts/timestamps.
+- Signals are review-only evidence. They do not automatically fail, terminate, reduce score or consume additional attempts. No webcam, biometric, fullscreen-lock or proctoring requirement in v1.
+
+## 30. Staff review, history, reporting and cross-module boundaries
+
+| Role | Access |
+|---|---|
+| SUPER_ADMIN | Global Assessment manage, result release, privileged rejudge through Modules 6/7 and audited raw inspection |
+| HOD | Assessment create/view/update/publish/archive/restore in assigned College+Department; scoped roster/result summary |
+| MANAGER | View/create/update drafts in assigned Section/permitted Group; scoped roster/summary only; no publish/archive/delete |
+| FINANCE_TEAM | No Assessment access |
+| STUDENT | Eligible Assessment view/start/submit and own results when released |
+
+- Manual score override is disabled in v1. Staff View/CRUD does not imply score adjustment or source code access.
+- Reports are read-only and scoped; CSV export is disabled unless a future explicit export permission is approved. No cross-College or foreign Section filter can widen scope.
+- Assessment completion does not update CourseEnrollment.completedAt, course progress, certificates or subscription seats. Module 4 owns Course completion; Module 16 owns analytics.
+- Module 13 owns notification recipients, templates, channel and delivery. Module 15 owns canonical audit. Module 17 owns state transitions. Module 18 owns retries/reconciliation. Use durable outbox and dedupe eventId/runId.
+
+### Cross-module contract
+| Module | Contract |
+|---|---|
+| 4 — Course & Enrollment | Provides active College/Department/Section/Student membership status and Section audience events; Assessment does not create CourseEnrollment |
+| 5 — Problem Management | Provides immutable published ProblemVersion, language and resource policy |
+| 6 — Code Submission & Judge0 | Creates CodeSubmission with context=ASSESSMENT/contextId=AssessmentAttempt.id; owns SubmissionRun/JudgeRun and idempotency |
+| 7 — Test Case Evaluation | Finalizes Problem percentage/verdict, hidden-data handling and rejudge result events |
+| 8 — Labs & Lab Scoring | Separate activity owner; no Lab score/late policy reused for Assessment |
+| 10 — Groups & Membership | Owns Group and GroupMember lifecycle; Assessment checks canonical membership |
+| 11 — Contests | Contest-only penalty, rank and tie-break rules do not apply to Assessment |
+| 13 — Notifications | Owns delivery and recipients for safe committed Assessment events |
+| 15 — Audit Logging | Owns canonical audit; records lifecycle, release, integrity review and privileged changes |
+| 16 — Student Analytics | Consumes approved assessment analytics; no independent score authority |
+| 17/18 — State and Failure | Own canonical transition/recovery/retry semantics |
+
+## 31. Target schema delta and release gates
+
+### Target schema additions
+- AssessmentRevision: immutable revision/version, Assessment ID, title/description/type, College/Department/Group/Section audience, duration, startsAt/endsAt, maxAttempts, passingPercentage, resultReleasePolicy, integritySignalsEnabled, status/publishedAt.
+- AssessmentRevisionProblem: revisionId, AssessmentProblem/source relation ID, problemId, problemVersionId, zero-based orderIndex; unique revision+Problem and revision+orderIndex.
+- AssessmentSection: assessment/revision ID + sectionId; explicit Section audience; validate same College/Department.
+- AssessmentAttempt: assessmentId, revisionId, studentId, attemptNumber, status, startedAt, deadlineAt, submittedAt, completedAt, scorePercent, passed, createdAt/updatedAt; unique assessment+student+attemptNumber and one-active-attempt constraint.
+- AssessmentAttemptProblem: attemptId, revisionProblemId, status, bestCodeSubmissionId, evaluationPercent, finalizedAt; unique attempt+revisionProblem.
+- AssessmentScoreHistory and AssessmentIntegritySignal: append-only score/release/rejudge provenance and disclosed integrity review signals. No raw source or hidden testcase payload in these records.
+- Extend Assessment with revision pointer/published state as needed; retain conceptual Assessment and AssessmentProblem identity and fields.
+
+### Release readiness
+- [x] 22 function specifications retained (ASMT-F001–ASMT-F022).
+- [x] 36 product/architecture/security decisions adopted (ASMT-D01–ASMT-D36).
+- [x] 188 target QA cases defined (ASMT-QA-001–ASMT-QA-188).
+- [ ] Schema migrations/indexes and API/UI implemented.
+- [ ] Modules 4–8 and 10 integrations implemented.
+- [ ] Module 13/15/16/17/18 contracts implemented.
+- [ ] Execute QA, migration, security, concurrency, load and outbox recovery tests.
