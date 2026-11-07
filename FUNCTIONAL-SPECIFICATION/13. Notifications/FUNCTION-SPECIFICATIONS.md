@@ -1,6 +1,6 @@
 # Module 13 — Notifications: Function-Level Specifications
 
-**Document ID:** NOTIF-FS-FUNCTIONS-001 | **Version:** 0.1 | **Status:** Detailed draft; decisions open  
+**Document ID:** NOTIF-FS-FUNCTIONS-001 | **Version:** 0.2 | **Status:** Detailed draft; decisions open  
 **Standard:** [Functional Specification Standard](../FUNCTIONAL-SPECIFICATION-STANDARD.md)  
 **Parent:** [Overview](./README.md) · [QA cases](./QA-TEST-CASES.md)
 
@@ -17,6 +17,30 @@
 | STUDENT | V OWN | Own records |
 
 RBAC resource-level C/U permissions do not define whether staff can send, author, edit, or manage recipient notifications. Student access is own-only. Backend authorization must enforce role, scope, and ownership independently of UI visibility.
+
+## Historical function/channel crosswalk — legacy implementation is not target behavior
+
+**Evidence status: LEGACY-SPEC-REPORTED.** The historical Module 13 report identifies the following behavior in the old codebase. This review inspected the old-code report only; raw application files were not independently retrieved. The route, channel, queue and event names below are traceability data, not target contracts.
+
+| Target function / concern | Legacy routes or implementation reported | Target boundary |
+|---|---|---|
+| NOTIF-F001 List | No backend notification list endpoint; Zustand store held only frames received in current browser memory. | Target schema provides persistent per-recipient Notification data. API/list behavior remains recommendation; do not retain the memory-only design or 50-item cap by assumption. |
+| NOTIF-F002 Detail | No backend notification detail endpoint was reported. | Target detail read must recheck recipient/role/scope. The route and projection are not sourced. |
+| NOTIF-F003 Read state | Legacy client used `read` in RAM, mark-one/all-read and cleared the list; no persisted read API. | Target field is `isRead`; initial value, mark-all, auto-read, unread and history behavior remain decisions. Do not map client-only `read` directly into a new schema field. |
+| NOTIF-F004 Create | No Notification REST create endpoint/table was reported. WebSocket frames could be pushed by backend producers; email jobs were separate. | Target RBAC grants C to Super Admin/Finance/HOD/Manager but does not define whether this means announcements, recipient-record creation, or system event creation. Do not invent a broadcast model. |
+| NOTIF-F005 Update | No persisted Notification update API was reported; client read changes were transient only. | Target update permission ambiguity remains NOTIF-D04/D06/D07; recipientId and createdAt are not client-authoritative. |
+| NOTIF-F006 Delete | Client `clearAll` removed items from Zustand memory; no backend delete endpoint or retention mechanism was reported. | Client clear is not equivalent to Super Admin D permission or target deletion. Hard delete/archive/dismiss/retention remain NOTIF-D17/D19. |
+| NOTIF-F007 Link | Old transient payload used optional `link`; target schema uses `linkUrl`. | These fields are not interchangeable contracts. Validate scheme/host and require destination module to reauthorize access. |
+| NOTIF-F008 Dashboard | Old UI report describes a header Bell popover, unread badge, 320px popover, empty state and Sonner toasts; not a target Dashboard API. | Target Student Dashboard Notification entity mapping exists in v2 but not original Page–DB Mapping. Widget/list/count/realtime behavior remains NOTIF-D14/D22. |
+| NOTIF-F009 Event/Email/WebSocket | Legacy event labels included `UserCreated`, `UserInvitationAccepted`, `PasswordResetRequested`, `SubmissionGraded`, `CertificateIssued`, Event reminder, and dunning. Socket frames included `notification`, `certificate:issued`, `submission:graded`, `event:started/ended/extended/reminder`. | Use current owner-module event contracts only. Do not import legacy schedules, event payloads, severity, channels or source modules as the target catalogue. |
+
+### Historical email delivery details reported
+
+- BullMQ queue `email`, job name `send`, worker `EmailConsumer`, and AWS SES delivery were reported. The worker supported managed SES templates when `SES_USE_TEMPLATES === 'true'` and inline text fallback otherwise; non-production mock mode logged job payload variables.
+- Reported inline template keys included `welcome`, `password-reset`, `invitation`, `submission-graded`, `certificate-issued`, plus event reminder and `payment_recovery` templates in source-specific paths. These names/content are not approved target template identifiers.
+- The report states an outbox `PasswordResetRequested` event had no consumer, so the reset email was not enqueued. It reports `notification-fanout` queue registration without worker processors/jobs.
+- The report describes a dunning defect where `sub.tenantId` (UUID) was passed as the email `to` address. It also reports the in-app Notification object was capped to 50 items in browser RAM and disappeared on refresh/device change.
+- The report identifies live socket rooms including `user:${userId}` and event rooms. It reports user-room authorization, but the target channel handshake, event scope, payload schema and reconnect guarantees are not specified here.
 
 ## NOTIF-F001 — List/view notifications
 
@@ -314,7 +338,7 @@ NotificationType enum contains SYSTEM, ASSIGNMENT, GRADE, CONTEST, BILLING, TICK
 6. Delivery/retry/dedup outcomes follow approved shared rules.
 
 ### Gaps
-Trigger catalog, recipient selection, type mapping, channels, templates, status/retry, preference, and idempotency are NOTIF-D01–D03, D11–D16.
+Trigger catalog, recipient selection, type mapping, channels, templates, status/retry, preference, idempotency, event durability, email security, WebSocket authorization and per-channel delivery persistence are NOTIF-D01–D03, D11–D16 and D24–D28.
 
 ### Acceptance
 No trigger or recipient guessed; row creation is not treated as delivery success; delivery rules must be approved before enabling.
@@ -322,6 +346,55 @@ No trigger or recipient guessed; row creation is not treated as delivery success
 ### QA
 NOTIF-QA-056–065.
 
+## Proposed target handling and cross-module event contracts
+
+**Status: RECOMMENDATION ONLY.** The following defaults are proposed to make the target design coherent. They are not approved and must remain blocked by their linked NOTIF decisions.
+
+| Target function | Proposed direction | Decision gate |
+|---|---|---|
+| NOTIF-F001 / F002 | Persist and query a recipient's own inbox by default; derive recipient identity from the authenticated principal. Staff views of other recipients' records require a separately defined scoped-management purpose and permission. Use pagination and server-side scope before filters. | D05/D08/D19 |
+| NOTIF-F003 | Only the recipient can mark their own record read/unread; server persists `isRead`; repeated same-state requests are idempotent. Initial state recommendation: `false`. Mark-all-read is a batch operation scoped to the authenticated recipient. Opening detail does not auto-read unless approved. | D06/D10/D16 |
+| NOTIF-F004 | System producers create one Notification record per resolved recipient after the owning domain transaction commits. Do not accept client-set `createdAt`, `isRead`, or arbitrary `recipientId`. Staff broadcast/announcement creation should be a separately modeled workflow because the current Notification schema has no sender or audience fields. | D01–D04/D07/D19 |
+| NOTIF-F005 | Treat recipientId and createdAt as immutable. Do not edit content after it is visible to a recipient; use a correction/new record if approved. Staff C/U scope needs an explicit model before implementation. | D04/D05/D07/D19 |
+| NOTIF-F006 | Do not make user-facing clear/dismiss equivalent to hard delete. Preserve history by default; define a separate dismissal/retention state if required. Keep Super Admin delete permission distinct from recipient read/dismiss behavior. | D17/D19/D20 |
+| NOTIF-F007 | Prefer internal relative paths for product navigation. If external HTTPS links are allowed, use an explicit allowlist and safe-open behavior; never allow javascript/data schemes or rely on linkUrl for authorization. | D09/D18 |
+| NOTIF-F008 | If the Dashboard widget is approved, query only the Student's own persisted notifications. Widget preview, unread count, badge, refresh and sorting remain separate UX decisions. | D14/D22 |
+| NOTIF-F009 | Treat each owner module's committed durable event as the source trigger. Resolve recipient(s) from trusted event/relationship data, map to NotificationType, produce a minimal content projection, persist the in-app record, and dispatch approved email/realtime channels independently. Dedupe by stable event/recipient/channel identity; never let delivery failure alter the source domain result. | D01–D03/D11–D16/D24–D28 |
+
+### Candidate owner-module trigger domains (not a final event catalogue)
+
+| Producer / module | Current main-document evidence | Target notification treatment proposed |
+|---|---|---|
+| Module 1 — Identity | Approved AUTH decisions: email verification/recovery; security email on password changed/reset and email changed. Reset token is single-use and expires after 15 minutes. MFA toggle, role/scope change, suspension/deactivation and new-device emails are explicitly not selected in current target decisions. | Module 13 delivers only the security-email triggers approved by Module 1; reset token stays in the secure email workflow and never in an inbox Notification or log. |
+| Module 3 — Billing | SUB baseline owns configurable renewal reminders, invoice/payment and failure events. | Module 3 owns event/recipient business facts; Module 13 applies approved College contact, channel and template rules. Do not copy legacy dunning cron/address behavior. |
+| Module 4 — Course & Enrollment | Adopted target workflow has automatic Section enrollment, staff withdrawal and HOD-confirmed Course completion; it emits Module 13/15 events. | Consume safe committed events; Course completion remains HOD-verified and must not be inferred from solving Problems/Labs/Assessments/Contests. |
+| Modules 6–7 — Submission/Evaluation | Module 7 publishes SubmissionGraded only after final result persistence; Module 6/7 contracts define safe result summaries and owner modules. | Notify only after committed final result; no code, Judge0 token, hidden testcase details or infrastructure-only outcome leak. |
+| Module 8 — Labs | Adopted LAB contract emits safe committed Lab events; Module 13 owns recipient, channel, reminder and delivery configuration. | Consume only configured events; Student-specific Lab scores/feedback require recipient and privacy checks. |
+| Module 9 — Assessments | Module 9 documents safe committed events and assigns notification delivery to Module 13, but its decisions were prematurely marked adopted before the whole-module review. | Treat Assessment triggers as pending cross-module validation; do not use them as approved target event contracts yet. |
+| Module 11 — Contests | CON-D22 leaves notification and audit events/recipients/retention open. | No fixed 24h/1h reminders, event state push or Contest result notification until Module 11 decisions are reconciled. |
+| Module 12 — Certificates | CERT-D21 keeps audit/notification requirements open; no target issuance trigger is approved. | No automatic CertificateIssued notification until Module 12 eligibility/issuance and Module 13 delivery decisions are approved. |
+| Module 14 — Support Tickets | NotificationType.TICKET exists, but no Ticket event/recipient/channel mapping is source-defined. | No automatic ticket create/comment/assignment/status notification until Module 14 and NOTIF rules are approved. |
+
+### Proposed type mapping for review (not approved)
+
+| NotificationType enum | Candidate event family | Evidence status |
+|---|---|---|
+| SYSTEM | Approved identity/security and platform notices | Recommendation; AUTH restricts which security emails are selected |
+| ASSIGNMENT | Approved Lab/assignment publication or assignment to recipient | Recommendation; event semantics and recipients need Module 8/NOTIF decisions |
+| GRADE | Committed SubmissionGraded or approved score change | Recommendation aligned to Module 7 result contract |
+| CONTEST | Approved Contest registration/state/result event | Open under CON-D22 and NOTIF-D01–D03 |
+| BILLING | Invoice, renewal, payment success/failure | Module 3 owns business triggers; Module 13 channel/template remains open |
+| TICKET | Ticket event | Not source-defined; Module 14 + NOTIF decisions required |
+
+### Channel and delivery boundary
+
+- **In-app record:** `Notification` is the target durable recipient record; the source schema supplies only id, recipientId, title, message, type, linkUrl, isRead and createdAt.
+- **Email:** separate transactional delivery channel. Do not infer an EmailDelivery model, SES provider, BullMQ queue, template names, retries or send status from old code. Module 1 security rules and Module 3 billing recipient sources remain authoritative.
+- **Real-time:** optional delivery/presentation channel. A WebSocket frame is not the persisted notification and must not be the only way for a Student to discover an event. Realtime authorization and reconnect behavior remain decision-bound.
+- **Durability:** proposed sequence is domain transaction → durable outbox event → idempotent Notification creation → independently retriable channel delivery. Module 18 owns retry/replay; Module 15 owns audit. Exact transaction/outbox and event envelope remain technical decisions.
+- **Privacy:** notification title/message/link and email variables must use allowlisted summary data; no reset tokens, access/refresh tokens, code submissions, Judge0 tokens, hidden testcase inputs/outputs, or unredacted billing/payment payloads.
+
+## Decision log
 ## Decision log
 
 | ID | Question / conflict | Impact | Status |
@@ -349,4 +422,9 @@ NOTIF-QA-056–065.
 | NOTIF-D21 | Audit events for create/update/delete/read/delivery | Module 15 | Open |
 | NOTIF-D22 | Real-time vs polling/manual refresh/unread count | UX/technical | Open |
 | NOTIF-D23 | Access after User/College/Section deactivation | Lifecycle | Open |
+| NOTIF-D24 | Does each approved source event create an in-app Notification, send email, emit realtime, or fan out to several channels? Define per-event channel policy and precedence when a recipient/channel is unavailable. | Channel architecture and duplicate/missing notices | Open |
+| NOTIF-D25 | What is the canonical event envelope and durability boundary between source-module transaction, outbox, Notification creation, and external delivery? Define event identity/version and producer ownership with Modules 15/18. | Lost/duplicate notices, cross-module coupling and recovery | Open |
+| NOTIF-D26 | Define the transactional email contract: trusted recipient address source, template identifier/version, variable allowlist, locale, sender/reply-to, secret handling, and security-email separation under Module 1. | Account security, deliverability, privacy and support | Open |
+| NOTIF-D27 | If realtime delivery is selected, define authenticated private-channel identity, tenant/group/event scope, payload minimization, reconnect/replay behavior and authoritative fallback to persisted inbox. | Cross-user data leakage and missed events | Open |
+| NOTIF-D28 | Should per-channel delivery attempts/status/retry history be stored in a separate model, embedded in Notification, or omitted? Define retention and correlation without overloading the recipient inbox record. | Schema, observability, partial delivery and retention | Open |
 

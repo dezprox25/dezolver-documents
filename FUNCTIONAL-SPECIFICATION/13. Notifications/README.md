@@ -1,7 +1,7 @@
 # DEZOLVER — Module 13: Notifications
 
 **Document ID:** NOTIF-FS-001  
-**Version:** 0.1  
+**Version:** 0.2 — legacy Notifications cross-check and cross-module reconciliation  
 **Status:** Detailed draft — source-aligned; notification triggers, mutation semantics, and delivery decisions remain open  
 **Governing standard:** [Functional Specification Standard v1.0](../FUNCTIONAL-SPECIFICATION-STANDARD.md)  
 **Repository inclusion:** Draft only; not approval of target behavior.
@@ -44,13 +44,32 @@ The intended functional area is notification access and handling. The supplied s
 | [RBAC](../../docs/source-text/RBAC.md) | Notification V/C/U/D permission matrix and role scope rules | Does not define exact CRUD semantics or whether permissions apply to own/issued/recipient notifications |
 | [Schema](../../docs/source-text/scheema.md) | Notification fields, User recipient relationship, NotificationType enum | No delivery state, sender, read timestamp, channel, or trigger model |
 | [Functional Specification Standard](../FUNCTIONAL-SPECIFICATION-STANDARD.md) | Required function-level detail, evidence labels, decision log, QA/review structure | Governs authoring; does not define product behavior |
+| [Historical Module 13 forensic specification](../../functional-spec-from-old%20code/module-13-notifications/SPECIFICATION.md) and [legacy summary](../../functional-spec-from-old%20code/module-13-notifications/README.md) | Legacy email/SES pipeline, WebSocket frames, in-memory Zustand NotificationCenter, missing persistence/API, reported outbox/queue/email defects | LEGACY-SPEC-REPORTED only; this pass reviewed the report artifacts, not the raw application source files |
 
 ### Evidence labels
 - **Source-confirmed:** explicitly present in the supplied source.
 - **Derived:** security/functional consequence logically derived from source, not directly stated as UI behavior.
 - **Recommendation:** proposal for review only; not approved.
 - **TBD / Decision Required:** missing or conflicting behavior.
+- **LEGACY-SPEC-REPORTED:** a behavior stated in the old-code Module 13 forensic specification; this update inspected that report, not the raw application source files, and does not claim fresh code verification.
 
+### Historical Module 13 cross-check — legacy email, WebSocket, and ephemeral inbox
+
+**Evidence status: LEGACY-SPEC-REPORTED.** The old-code Module 13 forensic report labels itself `COMPLETED & FORENSICALLY VERIFIED` and cites backend, worker, WebSocket and frontend files. This pass reviewed the report artifacts in the repository; raw application source files were not independently retrieved. Findings below are attributed to the report, not freshly code-verified, and do not establish target requirements.
+
+| Area | Current target evidence | Historical behavior/defect reported | Target interpretation |
+|---|---|---|---|
+| In-app persistence | Target conceptual schema defines `Notification` with id, recipientId, title, message, type, linkUrl, isRead, createdAt; Page–DB Mapping associates Notification with role notification pages and Student Dashboard v2. | Old report says none of the legacy Prisma schemas had Notification/UserNotification models; the browser used a Zustand memory store only. | Target is a persisted per-recipient Notification record. Do not copy the old ephemeral-only architecture or infer that a UI frame equals a saved inbox record. |
+| Ingress/API | Target Page mapping and schema imply notification access, but the supplied sources do not define route names or API behavior. | Old report says no backend list/detail/read/delete REST endpoints existed. | No legacy endpoints are available as target contracts. List/detail/read/create/update/delete API shapes remain recommendations/decisions. |
+| Client behavior | Target source defines `isRead` but not readAt, delivery status, unread count, ordering, mark-all, dismiss or clear semantics. | Old NotificationCenter displayed a bell/popover, 50-item newest-first memory buffer, unread counter, mark-all-read and clear-all actions; refresh erased all items. | UI actions are historical only. A target UI must read persisted state; retention, unread and dismissal behavior remain open. |
+| Email | Main target sources define no EmailJob or delivery entity and no fixed channel. Module 1 separately approves security-sensitive password/email-change notifications; Module 3 owns billing reminder terms. | Old report describes BullMQ `email` queue, `EmailConsumer`, AWS SES, managed SES templates or inline fallback, with legacy templates `welcome`, `password-reset`, `invitation`, `submission-graded`, `certificate-issued`, event reminders and payment recovery. | Email is a separate delivery channel from the in-app Notification row. Provider, template catalog, recipient address source, delivery state and retry require decisions; do not copy SES/BullMQ configuration or old templates as target defaults. |
+| Real-time | Main target sources do not specify WebSocket channels, push frames, unread counter synchronization or reconnect behavior. | Old report describes user/event WebSocket rooms, socket frames including `notification`, `certificate:issued`, `submission:graded`, `event:started/ended/extended/reminder`, and client toast/store integration. | WebSocket is a possible transport, not the record of truth. Any target channel must authenticate the principal and enforce recipient/scope authorization. Event names and payloads require target contracts. |
+| Identity/security email | Module 1 target decisions require email verification for appropriate roles, email password recovery, 15-minute single-use reset token and security emails for password changed/reset and email changed. | Old report says `PasswordResetRequested` was emitted to outbox but had no consumer, so no reset email was queued. | Treat this as a legacy defect warning. Module 13 must provide the approved delivery integration; Module 1 remains authority for reset-token and security-event semantics. Never log or place reset tokens in Notification content. |
+| Billing email | Module 3 owns renewal reminders, invoice/payment-failure triggers and configurable reminder settings; Module 13 owns delivery. | Old report says dunning sent `sub.tenantId` (UUID) as the SES recipient address, causing email send failure. | Resolve a verified recipient email from Module 3's approved College/contact source; never treat tenant/College IDs as email addresses. Legacy dunning cron intervals are not target policy. |
+| Notification fanout | Target Notification entity is a recipient record; no fanout queue/worker is documented by target sources. | Old report says `notification-fanout` queue was registered but had no processors and no jobs enqueued. | Do not assume that queue or claim fanout is implemented. Recipient expansion, delivery fanout and idempotency are target design decisions. |
+| Event routing / triggers | Target NotificationType enum is SYSTEM, ASSIGNMENT, GRADE, CONTEST, BILLING, TICKET; it contains categories only. | Old report maps user creation/invitation, password reset request, contest reminders, grading, certificate issue and dunning to email/WS events. | Enum values do not establish triggers, recipients, channels, timings or content. Use each owning module's approved durable event contract; keep unapproved triggers open. |
+
+**Historical notification findings/defects retained only as regression warnings:** no legacy Notification table/API; loss on refresh/device change; no channel preferences; no notification-fanout worker; unhandled password-reset outbox event; dunning recipient UUID defect; 50-item client-memory cap; and notification delivery not audited in the old report. These are not copied as target architecture or requirements.
 ## 4. Terminology
 
 | Term | Meaning / status |
@@ -83,6 +102,7 @@ The intended functional area is notification access and handling. The supplied s
 - **Derived:** For recipient-owned notifications, server-side access must be based on authenticated recipient identity; client-supplied recipientId must not grant access to another user's inbox.
 - **Derived:** Every API must independently check role, permission, scope, and recipient ownership. Hiding controls in the UI is not sufficient.
 - **TBD:** Whether a notification has both a creator/sender and recipient; schema only exposes recipientId, not createdById or senderId.
+- **Legacy distinction:** The old client `Notification` object (`severity`, `read`, `link`) is not the target schema entity (`type`, `isRead`, `linkUrl`). The old `EmailJobData` and WebSocket frames are not target Notification records.
 
 ### 5.3 Page / entry point inventory
 
@@ -165,6 +185,11 @@ No sent, delivered, failed, archived, dismissed, scheduled, or expired state is 
 | NOTIF-BR-008 | Finance Team, HOD, and Manager notification access is scope-limited | RBAC |
 | NOTIF-BR-009 | Frontend page visibility does not replace server-side authorization | RBAC security principle |
 | NOTIF-BR-010 | Notification event triggers, recipients, delivery channels, and creation policies are not source-defined | Source review finding |
+| NOTIF-BR-011 | Target Notification is a per-recipient record with only the supplied schema fields; the legacy client object is a distinct transient shape | Target schema vs LEGACY-SPEC-REPORTED |
+| NOTIF-BR-012 | Recipient identity and organizational scope must be validated server-side; client recipientId cannot grant access | RBAC / derived |
+| NOTIF-BR-013 | A persistent Notification row, email delivery attempt and realtime frame are distinct outcomes; one does not prove the others succeeded | Derived from target schema and Module 18 ownership |
+| NOTIF-BR-014 | Password reset tokens, access/refresh tokens, source code, hidden testcase data, and raw provider credentials must not be placed in notification content or logs | AUTH target decisions / Modules 6–7 security |
+| NOTIF-BR-015 | A NotificationType enum value is a category only; it does not define event trigger, recipient, timing or channel | Target schema / source review finding |
 
 ### Validation table
 
@@ -182,14 +207,20 @@ No sent, delivered, failed, archived, dismissed, scheduled, or expired state is 
 
 ## 9. Dependencies
 
-- **Module 1 — Authentication & User Lifecycle:** authenticated user identity, active/suspended account behavior, session expiry.
+- **Module 1 — Authentication & User Lifecycle:** authenticated user identity, active/suspended account behavior and session expiry. Approved security-email events are password changed/reset and email changed; password reset tokens are single-use and expire after 15 minutes. Do not add notifications for MFA toggles, role/scope change, suspension/deactivation or new-device login under current AUTH decisions.
 - **Module 2 — College / Department / Section Management:** role scope and organizational context.
-- **Module 3 — Subscription & Seat Management:** possible billing notification event sources (not defined here).
-- **Modules 4–12:** possible course, assignment/lab, grade, contest, group, ticket, certificate event sources; actual triggers and recipient rules are TBD.
+- **Module 3 — Subscription & Seat Management:** owns renewal reminders, invoices, payment failures and their configurable billing terms; Module 13 owns notification recipients/channels/content/delivery. Never use College/tenant IDs as email destinations.
+- **Module 4 — Course & Enrollment:** adopted enrollment/withdrawal/HOD-verified completion events may produce notices; Course completion is not inferred from Lab/Assessment/Contest work.
+- **Modules 6–8 — Submission/Evaluation/Labs:** Module 6/7 emit safe committed SubmissionGraded events after result persistence; Module 8 emits safe committed Lab events. Module 13 resolves recipients/channels; payloads must not include source code, Judge0 tokens, hidden testcase data or privileged diagnostics.
+- **Module 9 — Assessments:** notification event definitions are present in its draft, but Module 9's decisions were prematurely marked adopted before the all-modules review; treat these triggers as candidates pending cross-module decision review.
+- **Module 10 — Groups:** membership/Group events require approved producer contracts; do not infer broadcasts from Group membership alone.
+- **Module 11 — Contests:** notification triggers, recipients, audit and reminders remain open under CON-D22; legacy 24h/1h contest reminders are not target defaults.
+- **Module 12 — Certificates:** current target sources do not define certificate-issued/revoked notification triggers; CERT-D21 remains open.
+- **Module 14 — Support Tickets:** NotificationType includes TICKET, but ticket events/recipients/channels are not source-defined; do not send on create/comment/assign/status change without approval.
 - **Module 14 — Support Tickets:** potential TICKET notifications; event/recipient mapping TBD.
-- **Module 15 — Audit Logging:** central audit definitions; notification create/update/delete/read events require decision.
-- **Module 17 — Functional State Machines:** notification lifecycle if more than read/unread/delete is approved.
-- **Module 18 — Edge Cases & Failure Handling:** shared error response, retries, idempotency, stale updates, and concurrency.
+- **Module 15 — Audit Logging:** owns canonical audit event names, fields, metadata allowlists, PII redaction and retention. Notification delivery logs are not a substitute for audit events; AUD-D02/D06/D07/D17/D18/D21 coordination remains open.
+- **Module 17 — Functional State Machines:** owns state transitions for identity, course, submission, contest, certificate, ticket and outbox; Module 13 consumes only committed events and does not redefine source state.
+- **Module 18 — Edge Cases & Failure Handling:** owns outbox durability/replay, retries, idempotency, duplicate delivery, provider outage, dead-letter/recovery and partial failure. A Notification row and an email/WebSocket delivery attempt are separate outcomes.
 
 ## 10. Source gaps and known conflicts
 
@@ -201,6 +232,10 @@ No sent, delivered, failed, archived, dismissed, scheduled, or expired state is 
 6. No external delivery channels, preferences, delivery status, templates, retry behavior, or notification retention are documented.
 7. No default isRead value or read/unread UI actions are documented.
 8. No notification-to-resource URL contract or security rules are documented.
+9. Historical email and WebSocket transport are not current target API/channel contracts; raw old source has not been independently inspected here.
+10. Main target schema has no senderId, channel, deliveryStatus, attemptCount, deliveredAt, readAt, dismissedAt, or archivedAt fields. Do not invent them without a schema decision.
+11. The NotificationType enum does not map event → type, recipient, channel or template.
+12. Module 13 must reconcile durable in-app persistence with external email and realtime channels without making an external send result authoritative for the saved inbox.
 
 ## 11. Decision log
 
@@ -211,7 +246,7 @@ See [NOTIF decision log](./FUNCTION-SPECIFICATIONS.md#decision-log). All open it
 - [Function-level specifications](./FUNCTION-SPECIFICATIONS.md)
 - [QA test cases](./QA-TEST-CASES.md)
 
-**Readiness:** Detailed draft. It is suitable for source-based module completion and later review, but not implementation approval. Notification trigger catalog, sender/recipient semantics, mutation permissions, delivery channels, and URL policy must be decided before those behaviors are implemented.
+**Readiness:** Source-first detailed draft. The target Notification fields and RBAC/page evidence are documented; historical email/WebSocket/memory-store behavior is separately labeled LEGACY-SPEC-REPORTED. NOTIF-D01–D28 remain open. No legacy queue, route, template, trigger, schedule, payload, persistence limitation or bug is adopted as target behavior. Completion of all modules precedes the cross-module/product-owner decision pass; no ADOPTED-DECISIONS file is created.
 
 ### Review checklist
 - [x] Source docs identified and reviewed.

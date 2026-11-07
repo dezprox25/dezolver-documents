@@ -1,6 +1,6 @@
 # Module 13 — Notifications QA Test Cases
 
-**Version:** 0.1 | **Status:** Detailed QA draft; decision-dependent tests are blocked until policy approval  
+**Version:** 0.2 | **Status:** Detailed QA draft; decision-dependent tests are blocked until policy approval  
 **Related:** [Overview](./README.md) · [Function specifications](./FUNCTION-SPECIFICATIONS.md)
 
 > For decision-dependent tests, the expected result is to apply the approved rule. This document does not select the product rule.
@@ -84,14 +84,41 @@
 | NOTIF-QA-064 | F009 | User opted out of channel, if preferences are approved | Respect approved preference behavior | D15 |
 | NOTIF-QA-065 | F009 | Delivery contains sensitive academic/financial information | Apply approved privacy/content/channel policy | D12/D15 |
 
+| NOTIF-QA-066 | F001/F002 | Student receives a Notification, reloads the page and signs in on a second device | Target list/detail reads persisted recipient records; do not reproduce legacy RAM-only loss on reload/device change | Target schema / LEGACY-SPEC-REPORTED |
+| NOTIF-QA-067 | F001/F003 | Recipient marks a record read on Device A and opens inbox on Device B | Both clients reflect persisted isRead after refresh/reconciliation; realtime is not the source of truth | D10/D22/D27 |
+| NOTIF-QA-068 | F001 | Inbox contains more than 50 records | Do not impose legacy Zustand 50-item ring-buffer eviction as retention; apply approved pagination/retention policy | LEGACY-SPEC-REPORTED / D08/D17 |
+| NOTIF-QA-069 | F001/F002 | Client assumes the old UI's absence of REST endpoints means target inbox is only socket-driven | Do not infer target API contract from legacy missing endpoints; implement only an approved persistent read interface | LEGACY-SPEC-REPORTED / target schema / D08 |
+| NOTIF-QA-070 | F001/F004/F009 | Socket client subscribes to another user's `user:{userId}` channel or submits a forged recipientId | Server binds personal channel/recipient to authenticated principal; deny cross-user delivery and record access | RBAC / D02/D05/D27 |
+| NOTIF-QA-071 | F004/F009 | Same durable source event is replayed or delivered twice to the same recipient/channel | Apply approved eventId/recipient/channel deduplication; no duplicate inbox rows or duplicate external side effects | D16/D25/D28 / Module 18 |
+| NOTIF-QA-072 | F009 | Submission grading event arrives before Module 7 final result transaction commits | No grade notification until canonical SubmissionGraded is committed; operational/incomplete evaluation produces no false grade notice | Module 6/7 / D01/D25 |
+| NOTIF-QA-073 | F004/F009 | Notification or email payload is built from hidden testcase inputs/outputs, source code, Judge0 token or raw diagnostics | Remove sensitive content; deliver only approved safe result summary to authorized recipient | Module 6/7 / D12/D26 |
+| NOTIF-QA-074 | F009 | Worker emits SubmissionGraded while an older consumer listens for SubmissionAccepted | Target consumers use one canonical owner-approved committed event contract; do not copy the legacy event-name mismatch | LEGACY-SPEC-REPORTED / Module 6/7 / D25 |
+| NOTIF-QA-075 | F009 | Lab event is emitted before Lab/LabScore transaction is committed or is replayed | Consume only safe committed Lab events; deduplicate and use Module 8's authoritative Lab score/history | Module 8 LAB-D24/D35 / D25 |
+| NOTIF-QA-076 | F009 | Course enrollment/completion notice is triggered by a Problem/Lab/Contest completion rather than HOD-confirmed Course completion | Respect Module 4's adopted Course completion rule; no automatic Course completion notice from activity completion alone | Module 4 / D01/D02 |
+| NOTIF-QA-077 | F009 | Assessment notice is sent based on a Module 9 event before its decisions are reviewed in the all-modules pass | Treat Assessment trigger as decision-blocked until cross-module approval; no guessed event/recipient/channel | Module 9 workflow caveat / D01–D03 |
+| NOTIF-QA-078 | F009 | Contest reminder is sent 24 hours or 1 hour before start solely because legacy cron did so | No fixed legacy reminder schedule; use only Module 11-approved trigger and recipient policy | LEGACY-SPEC-REPORTED / CON-D22 / D01/D11 |
+| NOTIF-QA-079 | F009 | Contest start/end/extend WebSocket event is delivered to a user without approved participation/scope check | Resolve recipient/authorized Contest scope from Module 11; no legacy event-room broadcast is assumed | LEGACY-SPEC-REPORTED / CON-D22 / D02/D27 |
+| NOTIF-QA-080 | F009 | Dunning email destination is populated from College/tenant UUID | Resolve a verified email address from Module 3's approved College billing-contact source; reject UUID/non-email destination | LEGACY-SPEC-REPORTED / Module 3 / D26 |
+| NOTIF-QA-081 | F009 | Password reset request emits outbox event but no email consumer processes it | Wire the approved Module 1 password-recovery event to delivery; reset token remains single-use/15-minute and is not stored in Notification or logs | AUTH decisions / LEGACY-SPEC-REPORTED / D25–D26 |
+| NOTIF-QA-082 | F009 | Email notification is sent for MFA toggle, role/scope change, suspension/deactivation or new-device login | Do not send those email events under current Module 1 approved security-notification policy; send only password changed/reset and email changed where specified | Module 1 approved decisions / D01/D26 |
+| NOTIF-QA-083 | F009 | Target email delivery is assumed to use SES managed templates or old inline fallback solely because legacy worker supported both | Email provider/template mode follows explicit target configuration; legacy SES environment switch is not a target default | LEGACY-SPEC-REPORTED / D11/D12/D26 |
+| NOTIF-QA-084 | F009 | Unknown email template falls back to a raw JSON dump containing variables/secrets | Unknown template fails safely or uses an approved safe fallback; never log or email raw unfiltered job payload | LEGACY-SPEC-REPORTED / AUTH / D12/D26 |
+| NOTIF-QA-085 | F009 | Producer enqueues work to legacy `notification-fanout` queue with no registered worker | Do not treat legacy queue as implemented; only dispatch through an approved durable consumer/worker contract | LEGACY-SPEC-REPORTED / D25/D28 / Module 18 |
+| NOTIF-QA-086 | F009 | Certificate issuance is assumed to emit `CertificateIssued` email/socket notice from the old Credentials pipeline | Wait for Module 12 eligibility/issuance and certificate-notification decisions; CERT-D21 remains open | LEGACY-SPEC-REPORTED / Module 12 / D01/D24 |
+| NOTIF-QA-087 | F009 | WebSocket delivery succeeds but the user reloads or misses the frame | Persist/retrieve the approved Notification record independently; realtime is an optional presentation channel, not durable inbox evidence | LEGACY-SPEC-REPORTED / target schema / D22/D24/D27 |
+| NOTIF-QA-088 | F007 | linkUrl uses javascript/data scheme, an unapproved external host, or redirects outside allowlist | Block unsafe schemes/open redirects; destination rechecks its own authorization | D18 |
+| NOTIF-QA-089 | F004/F009 | Staff producer broadcasts to an entire College/Department/Section/Group using client-supplied audience IDs | Re-resolve recipient set from trusted membership/scope in owner module; reject forged or out-of-scope fanout | RBAC / D02/D04/D05/D25 |
+| NOTIF-QA-090 | F009 | Notification row is persisted but email provider fails (or email succeeds but inbox persistence fails) | Track independent channel outcomes according to approved consistency policy; do not report both channels delivered or fail the source domain transaction silently | D13/D24/D25/D28 / Module 18 |
+
 ## Coverage summary
-65 tests cover:
+90 tests cover:
 - recipient/role/scope access;
 - notification detail and read state;
 - creation, update, delete permissions;
 - schema validation;
 - URL/link safety and destination authorization;
 - Student Dashboard source discrepancy;
-- event triggers, recipients, delivery channels, retry, and privacy decisions.
+- event triggers, recipients, delivery channels, retry, and privacy decisions;
+- target persistence vs legacy memory-only behavior, email/SES, WebSocket, outbox/fanout, event-owner alignment, identity security, billing recipient and cross-channel partial-failure regression.
 
-Tests tied to unresolved decisions must remain blocked until the relevant policy is approved.
+NOTIF-QA-066–090 are target-vs-legacy and cross-module regression cases. Test cases are defined only; they have not been executed. Tests tied to unresolved decisions must remain blocked until the relevant policy is approved.
