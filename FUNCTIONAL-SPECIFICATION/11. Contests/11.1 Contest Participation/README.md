@@ -1,6 +1,6 @@
 # DEZOLVER — 11.1 Contest Participation
 
-**Document ID:** CON-PART-FS-001 | **Version:** 0.1 | **Status:** Detailed draft; decisions open  
+**Document ID:** CON-PART-FS-001 | **Version:** 0.2 | **Status:** Detailed draft; decisions open  
 **Governing standard:** [Functional Specification Standard v1.0](../../FUNCTIONAL-SPECIFICATION-STANDARD.md)  
 **Parent module:** [Module 11 Contests](../README.md)  
 **Core contest management:** [Function-Level Specifications](../FUNCTION-SPECIFICATIONS.md)
@@ -58,5 +58,9 @@ Student identity must come from authenticated session. Staff roster visibility i
 - **Failure/edge:** foreign Contest, former participant, removed Student, privacy.
 - **Acceptance:** role/scope and own-data rules; no code/score leakage.
 - **QA:** CON-QA-055–058.
+
+### Historical cross-check — legacy Event evidence
+
+**Evidence status: LEGACY-SPEC-REPORTED.** The old-code report describes a separate Registration entity with POST registration, DELETE self-unregister and organizer roster routes. Registration included optional teamName, registered/cancelled/pending_payment states, timestamps, reported unique (eventId,userId) and optional maxParticipants. Paid orders/refunds and a registration guard defect were also reported: service accepted only published while the watcher moved to registration_open. These are not target behavior. Target ContestParticipant has contestId/studentId/joinedAt/timestamps only; capacity, withdrawal, team, payment, duplicate and eligibility rules remain CON-D07–D10/D26. Do not copy the status lockout, payment path or teamName semantics. Raw source was not independently retrieved.
 
 **Decision IDs:** CON-D07–D10, D23–D24.

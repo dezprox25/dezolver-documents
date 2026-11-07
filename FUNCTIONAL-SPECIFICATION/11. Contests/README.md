@@ -1,7 +1,7 @@
 # DEZOLVER — Module 11: Contests
 
 **Document ID:** DEZ-CON-FS-001  
-**Version:** 0.1 — detailed source-grounded draft  
+**Version:** 0.2 — legacy Event cross-check and cross-module reconciliation  
 **Status:** Detailed draft aligned to Functional Specification Standard v1.0; product, security, and architecture decisions remain open  
 **Approval status:** Not approved for implementation  
 **Governing standard:** [Functional Specification Standard v1.0](../FUNCTIONAL-SPECIFICATION-STANDARD.md)  
@@ -61,15 +61,48 @@ This module specifies the available source-supported scope and identifies what m
 | [Page-to-DB Mapping original](../../docs/source-text/Page%20-%20DB%20Mapping.md) | HOD/Manager/Student Contests pages; Student Leaderboard; related Contest entities, Problem, Group. | No complete interaction details. |
 | [RBAC](../../docs/source-text/RBAC.md) | SUPER_ADMIN global; Finance assigned College; HOD College+Department; Manager College+Department+Section/permitted Group; Student own/permitted academic data. Contest role matrix and Contest Ranking role matrix. | Role scope and Contest-specific direct relationships do not fully align with schema. |
 | [Conceptual Schema](../../docs/source-text/scheema.md) | Contest, ContestProblem, ContestParticipant, ContestScoreRank, GroupContest; ContestStatus enum. | Conceptual schema only; not proof of deployed constraints or full target data model. |
-| [Functional Specification Standard](../FUNCTIONAL-SPECIFICATION-STANDARD.md) | Function-level detail, evidence labels, acceptance criteria, QA, decision log, readiness checklist. | Governs authoring; does not itself decide Contest behavior. |
+| [Functional Specification Standard](../FUNCTIONAL-SPECIFICATION-STANDARD.md) | Function-level detail, evidence labels, acceptance criteria, QA, decision log, readiness checklist. |
+| [Historical Module 11 forensic specification](../../functional-spec-from-old%20code/module-11-contests/SPECIFICATION.md) and [legacy summary](../../functional-spec-from-old%20code/module-11-contests/README.md) | Legacy Event model, routes, state watcher, registration/payment flow, Assessment-proxy submission, scoring/Redis leaderboard, reported defects, ELO and certificate side effects. | Governs authoring; does not itself decide Contest behavior. |
 
 ### Evidence labels
 - **Source-confirmed:** explicitly present in the supplied source documents.
 - **Derived:** logical consequence of source facts, not stated as a complete rule.
 - **Recommendation:** suggested target behavior, pending product-owner approval.
 - **TBD / Decision Required:** absent, ambiguous, or conflicting source evidence.
-- **Legacy-verified:** not used in this module because no Contest forensic/legacy audit evidence was supplied for this authoring pass.
+- **LEGACY-SPEC-REPORTED:** behavior reported by the historical Module 11 forensic specification. This review inspected that report, not raw legacy application files; findings are not claimed as independently reverified.
+- **Legacy-verified:** not claimed here. Raw legacy application source was not independently retrieved during this pass.
 
+### 3.1 Historical Module 11 forensic cross-check — legacy Event is not target Contest
+
+**Evidence status:** LEGACY-SPEC-REPORTED. The historical Module 11 artifact labels its reconstruction `COMPLETED & FORENSICALLY VERIFIED` and cites `src/events/`, `prisma/events/`, billing and frontend files. This review inspected the report artifact only; raw legacy application source files were not independently retrieved.
+
+The historical implementation is an **Event** subsystem. The current target documentation defines a **Contest** entity and separate participation, submission, scoring, penalty, ranking and tie-breaking areas. These concepts overlap, but the schemas, lifecycle, API contracts and side effects are not interchangeable.
+
+| Area | Legacy Event behavior reported | Current target Contest evidence / interpretation |
+|---|---|---|
+| Main entity | `Event`: tenantId, kind, title, description, startsAt, endsAt, maxParticipants, visibility, paid, registrationFeePaise, string status, createdByUserId, timestamps. Kinds included competition, workshop, hackathon, webinar. | Target `Contest`: id, collegeId, createdById, title, description, startsAt, endsAt, ContestStatus, isActive, timestamps. Do not import legacy kind, visibility, capacity, paid-fee or tenant fields. |
+| Registration | `Registration`: eventId, userId, tenantId, optional teamName, status, registeredAt, cancelledAt; reported unique (eventId,userId). | Target `ContestParticipant`: contestId, studentId, joinedAt, timestamps. Capacity, withdrawal, payment, team semantics and uniqueness remain open. |
+| Event routes | GET/POST `/events`, GET `/events/:id`, PATCH `/events/:id`, publish, cancel, extend; PATCH reported draft-only. | Target CON-F001–F006 define Contest CRUD, Problem configuration and lifecycle. Legacy routes/permission strings are not target API contracts. |
+| Problem association | No legacy EventProblem/ContestProblem table or Event config JSON column reported, despite frontend EventConfig/CompetitionProblem types. | Target conceptual schema explicitly defines `ContestProblem(contestId, problemId, pointsWeight, orderIndex, createdAt)`. Version pinning remains CON-D11 / Module 5. |
+| Participation | Legacy registration guard reportedly accepted only `published` while watcher changed to `registration_open`, causing a lockout. Capacity used maxParticipants; audience/cohort scope reportedly not validated. | Target registration windows, capacity, eligibility, boundaries and scope must follow target ContestStatus/RBAC; do not reproduce the reported defects. |
+| Submission | `POST /events/:id/submissions` was a stub; actual code used Assessment submission with `metadata.eventId`. | Module 6 now defines target `contextType=CONTEST`, `contextId=Contest.id`, and CodeSubmission → SubmissionRun → JudgeRun. Do not route target Contest submissions through Assessment. |
+| Scoring | Legacy consumer accepted `accepted`/`partial`, upserted EventResult.score and updated Redis. | Module 7's adopted evaluation result is the evaluation input. Target pointsWeight meaning, per-Problem score model, attempt selection and totalScore aggregation remain open under CON-D15/17/23. |
+| Penalty | No ICPC penalty calculation, wrong-attempt counter or cumulative solve-time tracker reported. | Target `ContestScoreRank.penaltyTime` has no unit/formula. Do not assume a 20-minute penalty; CON-D16 remains open. |
+| Ranking/ties | Redis `leaderboard:event:${eventId}`; ascending `zrank` defect; final grading sorted score descending; equal scores could receive arbitrary order. | Target ordering, provisional/final visibility and tie treatment remain open under CON-D18/19. Do not copy `zrank` or arbitrary row-order tie results. |
+| Other side effects | Legacy EventCompleted reportedly applied ELO K=32/initial 1200/floor 100; top-three certificate eligibility; global leaderboard query defect; 24h/1h reminders; cancellation refunds. | Not target Contest defaults. Rating Module 16; certificates Module 12; notifications Module 13; payments Module 3; lifecycle/recovery Modules 17/18. Open target questions CON-D22/D26–D28. |
+
+**Historical section numbering differs from target submodule names.**
+
+| Historical report section | Historical topic | Current target destination |
+|---|---|---|
+| Legacy 11.1 | Event creation/scheduling/state | CON-F003/004/006; Module 17 owns transitions |
+| Legacy 11.2 | Event Problem config/submission indirection | CON-F005; CSUB-F001/F002; Module 5 owns Problem versioning |
+| Legacy 11.3 | Registration/eligibility | CPART-F001–F004 |
+| Legacy 11.4 | Contest window/Judge0/realtime state | CON-F006; CSUB-F001–003; CON-D28 |
+| Legacy 11.5 | Score, absent ICPC penalty, Redis leaderboard | CSCORE-F001–003; CPEN-F001/002; CRANK-F001/002 |
+| Legacy 11.6 | Final grading/ranking/ELO/certificates | CSCORE-F003; CRANK; CTIE; Modules 12 and 16 |
+
+**Do not transfer these as target requirements:** Event-specific states/cadence; legacy registration guard; Event/Registration/EventResult schema; Assessment proxy; accepted/partial score handling; Redis `zrank`; missing ICPC penalty; arbitrary tie ordering; ELO constants; top-three certificates; Razorpay event fees/refunds; 24h/1h reminders; or legacy WebSocket behavior.
 ## 4. Terminology
 
 | Term | Source-grounded meaning / status |
@@ -127,6 +160,8 @@ Do not guess the missing relationship or use creator identity as a substitute fo
 | 11.4 — Contest Penalty | Penalty input, calculation, storage and recomputation | [Penalty](./11.4%20Contest%20Penalty/README.md) |
 | 11.5 — Contest Ranking | Rank calculation, standings, leaderboard visibility | [Ranking](./11.5%20Contest%20Ranking/README.md) |
 | 11.6 — Contest Tie Breaking | Tie detection, tie-break application, final rank handling | [Tie Breaking](./11.6%20Contest%20Tie Breaking/README.md) |
+
+**Historical numbering note:** the old-code report's six sections use a different decomposition from the six current target subfolders. Current target folder names/function IDs are authoritative; the historical mapping is traceability only.
 
 ## 7. Functional inventory
 
@@ -201,9 +236,9 @@ Do not guess the missing relationship or use creator identity as a substitute fo
 | createdAt | timestamp | Schema |
 
 ### 8.6 Related CodeSubmission
-CodeSubmission contains problemId, studentId, language, code, judge0Token, verdict, executionTimeMs, memoryUsageKb, failedTestCaseIndex, stdout, stderr, submittedAt, startedAt, completedAt. It has no contestId, contestProblemId, participantId, or explicit contest attempt/session field in the conceptual schema.
+The conceptual source reconstruction lists problemId, studentId, language, code, judge0Token, verdict, executionTimeMs, memoryUsageKb, failedTestCaseIndex, stdout, stderr, submittedAt, startedAt and completedAt; it does not show direct Contest context fields.
 
-This is a significant contest-context linkage gap. Do not silently add fields or assume an implementation mechanism.
+**Cross-module reconciliation:** Module 6's adopted target contract adds one activity context to CodeSubmission. For Contest work, use `contextType=CONTEST` and `contextId=Contest.id`; Module 6 persists CodeSubmission → SubmissionRun → JudgeRun. Module 11 validates ContestProblem association and Student eligibility. This resolves generic submission-context ownership at Module 6 level; Contest attempt limits and score/rank semantics remain open.
 
 ## 9. Source-supported Contest status values and lifecycle caveat
 
@@ -222,7 +257,7 @@ The source does not define:
 - whether a contest may be published/visible before start;
 - whether the server or a scheduled process changes status.
 
-No state transition is approved in this draft. Module 17 must own the canonical transition rules.
+No target state transition is approved in this draft. The historical Event report describes a different lifecycle (draft, published, registration_open, registration_closed, live, grading, completed, plus cancellation behavior) driven by a 30-second watcher and delayed final grading. Those reported states/timings do not map directly to the target ContestStatus enum and are not imported. Module 17 owns target transitions; align FSM-D04/D05 with CON-D04/D05/D17/D20.
 
 ## 10. Cross-module dependencies
 
@@ -230,17 +265,17 @@ No state transition is approved in this draft. Module 17 must own the canonical 
 |---|---|
 | 1 Authentication & User Lifecycle | Authenticated identity, account status, role/session |
 | 2 College / Department / Section | Scope assignment and organizational relationships |
-| 3 Subscription & Seat Management | Eligibility only if approved; source does not define Contest subscription gating |
-| 5 Problem Management | Problem definition, visibility, language/runtime settings, hidden testcase protection |
-| 6 Code Submission & Judge0 | Submission intake, Judge0 job and execution lifecycle |
-| 7 Test Case Evaluation | Verdict/evaluation results and testcase processing |
-| 10 Groups | Group membership and GroupContest relation; does not establish team participation |
-| 12 Certificates | Contest certificate eligibility/issuance if defined there |
-| 13 Notifications | Contest lifecycle, participation, results, and rank notifications |
+| 3 Subscription & Seat Management | Target source does not define paid Contest entry. Legacy Event reported paid orders/refunds; do not import them. Payment/fee/refund need and ownership are open under CON-D26 and Module 3. |
+| 5 Problem Management | Problem definition, visibility, language/runtime settings, hidden testcase protection and immutable ProblemVersion. ContestProblem has no version field in the current conceptual schema; pinning/snapshot strategy is CON-D11. |
+| 6 Code Submission & Judge0 | Adopted context contract: `contextType=CONTEST`, `contextId=Contest.id`; CodeSubmission → SubmissionRun → JudgeRun. Contest validates eligibility and Problem association before Module 6 accepts a submission. |
+| 7 Test Case Evaluation | Consume completed Module 7 score/verdict results. Do not adopt legacy Event `accepted`/`partial` behavior; Module 7's finalized evaluation contract is authoritative. Contest pointsWeight conversion remains CON-D15. |
+| 10 Groups | Group membership and GroupContest association. Module 10 owns GroupContest writes; a GroupContest link does not automatically create ContestParticipant rows or imply team submission/scoring. |
+| 12 Certificates | Owns certificate issuance and award criteria. The legacy top-three certificate rule is not target policy. |
+| 13 Notifications | Owns notification triggers, recipients and delivery. Legacy 24h/1h reminders are historical only; target schedules remain open under CON-D22. |
 | 15 Audit Logging | Canonical event names, payload, retention, privacy |
-| 16 Student Analytics | Contest participation and performance reporting |
-| 17 Functional State Machines | Contest/participant/submission/score/rank state transitions |
-| 18 Edge Cases & Failure Handling | Timeouts, retry, idempotency, race conditions, partial failures |
+| 16 Student Analytics | Consumes approved Contest standings/metrics. Legacy ELO/global leaderboard behavior is not target policy; Module 16 ANA-D10/D12/D13/D14 owns analytics/rating decisions (CON-D27). |
+| 17 Functional State Machines | Owns canonical Contest/participant/score/rank transitions; old Event cron states/cadence are not copied. Align CON-D04/D05/D17/D20 with FSM-D04/D05. |
+| 18 Edge Cases & Failure Handling | Owns retry, idempotency, concurrency, partial failure, scheduler recovery and outbox behavior; no legacy timing/retry values are reused. |
 
 ## 11. Decision log
 
@@ -271,6 +306,9 @@ No state transition is approved in this draft. Module 17 must own the canonical 
 | CON-D23 | Unique constraints/indexes for ContestProblem, Participant, GroupContest, ScoreRank | Data integrity | Open |
 | CON-D24 | Hidden testcase/result/score visibility and disclosure timing | Privacy/security | Open |
 | CON-D25 | Contest score/rank/certificate eligibility dependency | Module 12/16 integration | Open |
+| CON-D26 | Does the target Contest support paid entry, fee collection, refunds on cancellation, or free registration only? If paid, define gateway/order/refund ownership and status linkage. | Participation, billing, cancellation and reconciliation; target Contest schema has no paid/fee fields. | Open |
+| CON-D27 | Does Contest completion update a platform-wide competitive rating/global leaderboard, or only ContestScoreRank standings? If rating exists, define algorithm, inputs, tie treatment, versioning and idempotency with Module 16. | Rating integrity, cross-event analytics and global standings; legacy ELO values are not target defaults. | Open |
+| CON-D28 | Does the target live leaderboard require real-time WebSocket/push updates, or is a read/polling contract sufficient? Define channel authorization and provisional/final payload fields if real-time is required. | Client UX, authorization, infrastructure and stale/rank consistency; legacy Redis/WebSocket behavior is not adopted. | Open |
 
 ## 12. Review and readiness status
 
@@ -282,10 +320,10 @@ No state transition is approved in this draft. Module 17 must own the canonical 
 - [x] Six submodules linked and separately documented.
 - [x] Cross-module boundaries and decision log documented.
 - [x] QA companion planned/linked.
-- [ ] All CON-D01–D25 decisions resolved.
+- [ ] All CON-D01–D28 decisions resolved.
 - [ ] Target behavior approved by product owner.
 - [ ] Technical data model/API contracts approved.
 - [ ] Canonical state machine defined in Module 17.
 - [ ] Implementation readiness approved.
 
-**Review status:** Detailed draft for the all-modules-first authoring pass. Do not resolve the open decisions during this pass.
+**Review status:** Source-first Module 11 draft updated after reviewing the target module, all six target submodule notes, the historical old-code Module 11 forensic report, main source documents and cross-module contracts. CON-D01–D28 remain open. Do not adopt decisions during the all-modules-first pass. The historical report was reviewed as a document; raw legacy application source was not independently retrieved in this update.

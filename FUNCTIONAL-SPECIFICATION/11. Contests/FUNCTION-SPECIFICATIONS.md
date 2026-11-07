@@ -1,6 +1,6 @@
 # DEZOLVER — Module 11: Contest Management — Function-Level Specifications
 
-**Document ID:** DEZ-CON-FS-002 | **Version:** 0.1 | **Status:** Detailed draft; decisions open  
+**Document ID:** DEZ-CON-FS-002 | **Version:** 0.2 | **Status:** Detailed draft; decisions open  
 **Parent:** [Module 11 README](./README.md) | **Standard:** [Functional Specification Standard v1.0](../FUNCTIONAL-SPECIFICATION-STANDARD.md)
 
 > Source facts, recommendations, and TBD decisions are distinct. This document does not approve proposed behavior.
@@ -33,6 +33,26 @@ Conceptual schema does not show a Contest-specific CodeSubmission relation or a 
 
 ---
 
+## 1.1 Historical function crosswalk — Event subsystem is not Contest implementation
+
+**Evidence status: LEGACY-SPEC-REPORTED.** The old-code Module 11 forensic specification claims that the following behavior was traced in legacy source. This pass reviewed the report artifact only; raw application source files were not independently fetched. These findings are not approved target behavior.
+
+| Current target function(s) | Legacy routes / functions reported | Target treatment |
+|---|---|---|
+| CON-F001 / CON-F002 | `GET /events`; `GET /events/:id`; old guard permission `read:cohort`. | Historical list/detail analogue only. Do not copy route or permission strings; use target Contest RBAC and current scope. |
+| CON-F003 | `POST /events`; legacy Event create initialized status `draft`. | Create workflow analogue only. Legacy kind, visibility, maxParticipants and paid fee fields are not target Contest fields. |
+| CON-F004 | `PATCH /events/:id`; report says edits were draft-only. | Target metadata/schedule policy remains CON-D05/D20; old draft-only restriction is not adopted without approval. |
+| CON-F005 | No EventProblem/ContestProblem table or Event config JSON field was reported, despite frontend EventConfig/CompetitionProblem types. | Target ContestProblem is current conceptual-schema evidence. ProblemVersion pinning remains CON-D11. |
+| CON-F006 | publish/cancel/extend routes; old EventStateWatcherService reported a 30-second watcher and multi-state lifecycle. | Target has ContestStatus UPCOMING/LIVE/ENDED plus isActive. Target transitions are Module 17 / CON-D04/05/20 decisions. |
+| CON-F007 | No GroupContest relation was reported in old Event schema. | No legacy equivalent. Target GroupContest exists in current schema; Module 10 owns relation writes. |
+| CPART-F001–F004 | POST registration, DELETE self-unregister, organizer roster GET; legacy Registration had unique (eventId,userId), optional teamName, capacity and payment/cancel statuses. | Historical participation analogue. Target uses ContestParticipant; self/staff registration, duplicates, capacity, withdrawal, team and payment rules remain open. |
+| CSUB-F001–F003 | `/events/:id/submissions` was a stub; actual code used Assessment submission with `metadata.eventId`. | Do not use Assessment proxy for target Contests. Module 6 adopted `contextType=CONTEST`, `contextId=Contest.id`, CodeSubmission → SubmissionRun → JudgeRun. |
+| CSCORE-F001–F003 | SubmissionGradedConsumer accepted `accepted`/`partial`, upserted EventResult.score and updated Redis. | Module 7's adopted evaluation result is authoritative. Target pointsWeight, component persistence, totalScore and finalization remain CON-D15/17/23. |
+| CPEN-F001/F002 | No ICPC penalty calculation, wrong-attempt counter or cumulative solve-time tracker was reported. | `penaltyTime` has no target unit/formula. Do not assume a 20-minute penalty; CON-D16 remains open. |
+| CRANK-F001–F003 | Redis `leaderboard:event` used ascending `zrank`; final grading sorted score descending and assigned sequential ranks; equal scores could receive arbitrary order. | Target ordering, provisional/final visibility and tie treatment remain open under CON-D18/19. Do not copy `zrank` or arbitrary row-order tie results. |
+| CTIE-F001/F002 | No deterministic tie-break algorithm reported; equal scores could receive arbitrary sequential positions from DB row order. | No arbitrary target tie assignment. Criteria/shared rank/manual adjudication remain CON-D19. |
+
+**Other legacy side effects, not target defaults:** Razorpay paid registration/refunds; 24h/1h reminders; top-three certificate eligibility; pairwise ELO parameters K=32/initial 1200/floor 100; WebSocket/Redis broadcasts. These remain open under CON-D22/D26–D28 and owning Modules 3, 12, 13 and 16.
 ## CON-F001 — List and filter Contests
 **Requirement status:** Source page mapping/RBAC; filters/UI TBD. **Actors:** SUPER_ADMIN, FINANCE_TEAM, HOD, MANAGER, STUDENT.
 
@@ -373,7 +393,15 @@ Both entities authorized; relation persists; no team mode inferred; unlink retai
 
 QA: CON-QA-034–038.
 
-## Cross-reference
+### Cross-module contract reconciliation
+
+- **Module 5 — Problems:** ContestProblem selects a Problem. Target ContestProblem has no ProblemVersion reference, while Module 5 provides immutable ProblemVersion snapshots. Version pinning and behavior after Problem edits remain CON-D11; do not infer a snapshot mechanism.
+- **Module 6 — Code Submission & Judge0:** each formal CodeSubmission has one activity context. Contest uses `contextType=CONTEST`, `contextId=Contest.id`; persistence is CodeSubmission → SubmissionRun → JudgeRun. Module 11 validates ContestParticipant, ContestProblem and schedule eligibility; Module 6 owns intake/Judge0. The old Assessment-proxy route is not the target contract.
+- **Module 7 — Test Case Evaluation:** consume the completed canonical evaluation result and finalized score/verdict. Infrastructure/incomplete runs are not wrong answers or zero scores. Contest-specific pointsWeight, multiple-submission selection and totalScore aggregation remain CON-D15/17.
+- **Module 10 — Groups:** Group membership/GroupContest is not equivalent to ContestParticipant or team submission. A GroupContest link must not create participants or shared submissions without a decision.
+- **Module 9 — Assessments:** Contest submissions use CONTEST context and Contest-owned timing/participation policies. Do not inherit AssessmentAttempt/duration/result-release rules or retain the legacy Assessment proxy.
+- **Modules 12/13/15/16/17/18:** certificate criteria, notification triggers, audit fields/retention, platform rating, state transitions and recovery policies remain with those modules. Legacy ELO, reminder, WebSocket and cron settings are not adopted.
+## Cross-reference## Cross-reference
 Submodule specs:
 - 11.1 Participation
 - 11.2 Submission

@@ -1,6 +1,6 @@
 # DEZOLVER — 11.4 Contest Penalty
 
-**Document ID:** CON-PEN-FS-001 | **Version:** 0.1 | **Status:** Detailed draft; decisions open  
+**Document ID:** CON-PEN-FS-001 | **Version:** 0.2 | **Status:** Detailed draft; decisions open  
 **Governing standard:** [Functional Specification Standard v1.0](../../FUNCTIONAL-SPECIFICATION-STANDARD.md)  
 **Parent module:** [Module 11 Contests](../README.md)  
 **Core contest management:** [Function-Level Specifications](../FUNCTION-SPECIFICATIONS.md)
@@ -32,5 +32,9 @@ ContestScoreRank.penaltyTime integer is in schema. No penalty unit, formula, eve
 - **Failure/edge:** out-of-order Judge result, duplicate job, reopened Contest, missing historical submission.
 - **Acceptance:** identical source data gives same penalty; no double penalty; rank recalculated after change; manual adjustment auditable if allowed.
 - **QA:** CON-QA-099–102.
+
+### Historical cross-check — legacy Event evidence
+
+**Evidence status: LEGACY-SPEC-REPORTED.** The historical report says no ICPC penalty engine, wrong-attempt counter or cumulative solve-time tracker existed, despite a frontend wrongAttemptPenaltyMinutes type. Target ContestScoreRank.penaltyTime is an integer with no specified unit/formula. Do not assume 20-minute penalties or another contest convention. CON-D16 remains open for accepted time, wrong/compile/runtime outcomes, rejudge, caps and units. Raw old source was not independently fetched.
 
 **Decision IDs:** CON-D16–18/23.

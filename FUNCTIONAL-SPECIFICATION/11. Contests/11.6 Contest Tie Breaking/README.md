@@ -1,6 +1,6 @@
 # DEZOLVER — 11.6 Contest Tie Breaking
 
-**Document ID:** CON-TIE-FS-001 | **Version:** 0.1 | **Status:** Detailed draft; decisions open  
+**Document ID:** CON-TIE-FS-001 | **Version:** 0.2 | **Status:** Detailed draft; decisions open  
 **Governing standard:** [Functional Specification Standard v1.0](../../FUNCTIONAL-SPECIFICATION-STANDARD.md)  
 **Parent module:** [Module 11 Contests](../README.md)  
 **Core contest management:** [Function-Level Specifications](../FUNCTION-SPECIFICATIONS.md)
@@ -33,5 +33,9 @@ Schema includes totalScore, penaltyTime, rank, completedAt. Business Flow says s
 - **Edge:** exact score/penalty tie, missing timestamp, concurrent rank job, rejudge after resolution, Contest reopen, rank published.
 - **Acceptance:** explicit deterministic policy; no rule means preserve unresolved/shared tie as approved; manual changes auditable; repeatable.
 - **QA:** CON-QA-122–126.
+
+### Historical cross-check — legacy Event evidence
+
+**Evidence status: LEGACY-SPEC-REPORTED.** The historical report says equal scores could receive arbitrary sequential ranks from database row order and reports no deterministic secondary tie-breaker/shared-rank policy. Do not reproduce arbitrary tie ordering. Target score precision, penalty use, shared ranks and adjudication remain CON-D19. Legacy ELO (K=32, initial 1200, floor 100) is platform rating, not a tie-breaker; Module 16/CON-D27 owns that discussion. Legacy top-three certificate selection belongs to Module 12, not target tie policy.
 
 **Decision IDs:** CON-D19, D17–18, D22–25.

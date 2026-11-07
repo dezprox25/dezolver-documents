@@ -1,6 +1,6 @@
 # DEZOLVER — 11.3 Contest Scoring
 
-**Document ID:** CON-SCORE-FS-001 | **Version:** 0.1 | **Status:** Detailed draft; decisions open  
+**Document ID:** CON-SCORE-FS-001 | **Version:** 0.2 | **Status:** Detailed draft; decisions open  
 **Governing standard:** [Functional Specification Standard v1.0](../../FUNCTIONAL-SPECIFICATION-STANDARD.md)  
 **Parent module:** [Module 11 Contests](../README.md)  
 **Core contest management:** [Function-Level Specifications](../FUNCTION-SPECIFICATIONS.md)
@@ -43,5 +43,9 @@ ContestProblem.pointsWeight decimal(6,2) and ContestScoreRank.totalScore decimal
 - **Edge:** Judge backlog, rejudge after publish, no submissions, Contest reopened.
 - **Acceptance:** finalization criteria explicit; unresolved evaluations handled by policy; manual adjustments traceable.
 - **QA:** CON-QA-088–092.
+
+### Historical cross-check — legacy Event evidence
+
+**Evidence status: LEGACY-SPEC-REPORTED.** Legacy SubmissionGradedConsumer reportedly accepted accepted/partial, upserted EventResult.score and updated Redis. Legacy EventResult is not target ContestScoreRank. Module 7's adopted finalized score/verdict is authoritative. Target pointsWeight meaning, per-Problem score storage, multiple-submission selection and totalScore aggregation remain CON-D15/17/23. Do not import legacy partial verdict or raw EventResult/Redis semantics. Raw old source was not independently verified.
 
 **Decision IDs:** CON-D15/17/23/24.

@@ -1,6 +1,6 @@
 # DEZOLVER — Module 11 Contests QA Test Cases
 
-**Version:** 0.1 | **Status:** Detailed QA draft; unresolved policy cases remain decision-blocked  
+**Version:** 0.2 | **Status:** Detailed QA draft; unresolved policy cases remain decision-blocked  
 **Standard:** Functional Specification Standard v1.0  
 **Related:** [Module 11 README](./README.md) · [Function Specs](./FUNCTION-SPECIFICATIONS.md)
 
@@ -148,5 +148,28 @@
 | CON-QA-125 | CTIE-F002 | Rejudge after tie resolution | Re-run rank/tie process | CON-D17/19 |
 | CON-QA-126 | CTIE-F002 | Tie-break data missing or conflicting | Defer final rank; do not arbitrarily choose | CON-D19 |
 
+| CON-QA-127 | CON-F003/F004 | Target Contest payload is evaluated against legacy Event-only fields (kind, visibility, maxParticipants, paid, registrationFeePaise) | Do not require or persist legacy-only fields unless a target decision and schema change approve them | LEGACY-SPEC-REPORTED / target schema |
+| CON-QA-128 | CON-F006 | Legacy Event state sequence/30-second watcher is assumed for target Contest | Target transitions use only the approved Module 17 Contest state machine; historical Event states/cadence are not copied | LEGACY-SPEC-REPORTED / FSM-D04 |
+| CON-QA-129 | CPART-F002/F003 | Registration guard only permits legacy literal `published` after Event watcher moves to `registration_open` | Do not reproduce reported lockout; enforce approved target eligibility/window contract | LEGACY-SPEC-REPORTED / CON-D04/D05/D10 |
+| CON-QA-130 | CPART-F003 | Legacy Registration.teamName is interpreted as proof of target team mode | Target team/shared submission behavior remains decision-bound; GroupContest alone does not imply team registration | LEGACY-SPEC-REPORTED / CON-D09 |
+| CON-QA-131 | CON-F005/CSUB-F001 | Problem is linked only in client-side config/unpersisted EventConfig | Use target ContestProblem records; legacy Event storage gap is not copied | Target schema / legacy report |
+| CON-QA-132 | CSUB-F002 | Client submits via legacy `/events/:id/submissions` stub or Assessment proxy with `metadata.eventId` | Use Module 6 `contextType=CONTEST`, `contextId=Contest.id`; no Assessment proxy | LEGACY-SPEC-REPORTED / Module 6 |
+| CON-QA-133 | CSUB-F002 | Submission body Contest ID differs from persisted context | Module 6 context and Contest authorization must agree; mismatch denied and not scored | Module 6 / CON-D12 |
+| CON-QA-134 | CSCORE-F001 | Legacy `partial` verdict/EventResult.score is copied as target evaluation contract | Consume Module 7 finalized score/verdict; target ContestScoreRank is not legacy EventResult | Module 7 / legacy report |
+| CON-QA-135 | CSCORE-F001/F002 | pointsWeight assumed to be raw multiplier/percentage without an approved formula | Apply no guessed weighting formula; calculation blocked by CON-D15 | CON-D15 |
+| CON-QA-136 | CON-F005/CSUB-F001 | Problem content changes without applying approved ProblemVersion snapshot rule | Follow approved CON-D11 version/snapshot policy; no silent current-Problem substitution | Module 5 / CON-D11 |
+| CON-QA-137 | CPEN-F001 | Default 20-minute ICPC penalty applied from legacy/frontend configuration label | No default penalty; apply only approved CON-D16 unit/formula | LEGACY-SPEC-REPORTED / CON-D16 |
+| CON-QA-138 | CRANK-F001 | Rank computed with legacy ascending Redis `zrank` behavior | Do not reproduce inverse-rank defect; use approved target CON-D18 policy | LEGACY-SPEC-REPORTED / CON-D18 |
+| CON-QA-139 | CTIE-F001/F002 | Equal-score participants receive arbitrary sequential ranks from database row order | Do not invent tie ordering; apply approved CON-D19 or keep tie decision-blocked | LEGACY-SPEC-REPORTED / CON-D19 |
+| CON-QA-140 | CRANK-F001/CRANK-F003 | Event completion applies legacy ELO K=32, initial 1200, floor 100 | Do not apply legacy ELO values; Module 16 owns approved rating policy | LEGACY-SPEC-REPORTED / CON-D27 / ANA-D13 |
+| CON-QA-141 | CRANK-F003 | Top-three participants automatically become certificateEligible because legacy `rank < 3` | Certificate criteria follow Module 12; no top-three target rule assumed | LEGACY-SPEC-REPORTED / Module 12 |
+| CON-QA-142 | CPART-F003 | Paid Contest order created automatically via legacy event-registration orders | No paid entry/gateway contract assumed without CON-D26 and Module 3 approval | LEGACY-SPEC-REPORTED / CON-D26 |
+| CON-QA-143 | CON-F006/CPART-F003 | Contest cancellation automatically issues Razorpay refunds from legacy EventCancelled behavior | Refund behavior requires approved target paid-entry/cancellation contract | LEGACY-SPEC-REPORTED / CON-D20/D26 / Module 3 |
+| CON-QA-144 | CON-F001/CPART-F002 | Target eligibility skips College/Department/Section/Group scope because legacy registration reportedly lacked audience enforcement | Enforce target RBAC/resource scope; legacy omission is a reported defect, not target policy | RBAC / CON-D01/D06/D08 |
+| CON-QA-145 | CRANK-F002/CRANK-F003 | Live leaderboard assumes legacy Redis/WebSocket room without approved authorization contract | Real-time transport remains CON-D28; any push/read access independently enforces target scope | LEGACY-SPEC-REPORTED / CON-D28 |
+| CON-QA-146 | CPART-F001/CPART-F003 | 24h/1h reminders emitted because legacy Event subsystem scheduled them | Target reminders/recipients not assumed; Module 13 and CON-D22 own decision | LEGACY-SPEC-REPORTED / Module 13 |
+| CON-QA-147 | CON-F006/CRANK-F003 | Legacy watcher/final-grading delay used as target timing | Use approved Module 17 transitions and CON-D04/D05/D17; recovery belongs to Module 18 | LEGACY-SPEC-REPORTED / Modules 17–18 |
+| CON-QA-148 | CRANK-F002/CRANK-F003 | Target leaderboard reads legacy global query or assumes legacy EventResult/Person rating persistence | Use target ContestScoreRank and authorized projections; global rating remains CON-D27/Module 16 | LEGACY-SPEC-REPORTED / target schema |
+
 ## Coverage
-126 cases span Contest management, participation, submission, scoring, penalty, ranking, tie-breaking, RBAC, privacy, lifecycle, data integrity, and cross-module failures. Policy-dependent cases remain open pending product decisions.
+148 cases span Contest management, participation, submission, scoring, penalty, ranking, tie-breaking, RBAC, privacy, lifecycle, data integrity, cross-module failures and legacy-to-target regression boundaries. CON-QA-127–148 prevent Event-era fields, lifecycle timing, Assessment-proxy submission, score/rank defects, ELO, certificate, payment/refund and notification behavior from being silently imported. Test cases are defined only; they have not been executed. Policy-dependent expected results remain open pending product decisions.

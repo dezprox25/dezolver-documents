@@ -1,6 +1,6 @@
 # DEZOLVER — 11.2 Contest Submission
 
-**Document ID:** CON-SUB-FS-001 | **Version:** 0.1 | **Status:** Detailed draft; decisions open  
+**Document ID:** CON-SUB-FS-001 | **Version:** 0.2 | **Status:** Detailed draft; decisions open  
 **Governing standard:** [Functional Specification Standard v1.0](../../FUNCTIONAL-SPECIFICATION-STANDARD.md)  
 **Parent module:** [Module 11 Contests](../README.md)  
 **Core contest management:** [Function-Level Specifications](../FUNCTION-SPECIFICATIONS.md)
@@ -48,5 +48,9 @@ Student submits as self and only when eligible. Staff access follows RBAC. Group
 - **Failure/edge:** Judge pending/error, contest ended, rejudge/score update.
 - **Acceptance:** own record restriction; verdict visibility follows Modules 6/7; pending is not final.
 - **QA:** CON-QA-072–076.
+
+### Historical cross-check — legacy Event evidence
+
+**Evidence status: LEGACY-SPEC-REPORTED.** The old-code report says POST /events/:id/submissions was a stub and actual event submissions used POST /assessments/:id/submissions with metadata.eventId. This is historical Event behavior, not the target contract. Module 6 adopted one activity context per CodeSubmission: contextType=CONTEST, contextId=Contest.id, persisted as CodeSubmission → SubmissionRun → JudgeRun. Module 11 validates ContestParticipant, ContestProblem and schedule eligibility; Module 6 owns intake/Judge0; Module 7 owns evaluation. Do not retain the Assessment proxy. Raw old source was not independently inspected.
 
 **Decision IDs:** CON-D05/06/11–14/24.
