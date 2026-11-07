@@ -1,6 +1,6 @@
 # Module 12 — Certificates QA Test Cases
 
-**Version:** 0.1 | **Status:** Detailed QA draft; decision-dependent scenarios marked  
+**Version:** 0.2 | **Status:** Detailed QA draft; decision-dependent scenarios marked  
 **Related:** [Overview](./README.md) · [Function-level specs](./FUNCTION-SPECIFICATIONS.md)
 
 > Tests that depend on unresolved decisions must be executed only after the decision is approved. For those cases, expected behavior is “apply approved rule”; it is not a default product requirement.
@@ -89,13 +89,37 @@
 | CERT-QA-067 | CERT-F009 | Verification service logs request | Log only approved metadata; no unnecessary PII/code secrets | Module 15 |
 | CERT-QA-068 | CERT-F009 | Foreign tenant certificate code queried | No cross-tenant private disclosure; public verification policy governs | RBAC/CERT-D17 |
 
+| CERT-QA-069 | CERT-F002/F003 | Template fields are changed to legacy `name`, `kind`, or single `design` JSON payload | Keep target conceptual fields `title`, `htmlTemplate`, `stylesConfig`; do not silently substitute legacy schema | Target schema / legacy report / CERT-D28 |
+| CERT-QA-070 | CERT-F006/F007/F009 | API assumes target Certificate has legacy `contextType`, `contextId`, `metadata`, `qrCode`, `isPublic`, `status`, `revokedAt`, or `revocationReason` | Do not rely on those fields absent explicit target schema decision/migration; keep `verificationCode` distinct from legacy `qrCode` | Target schema / CERT-D16–18/D28 |
+| CERT-QA-071 | CERT-F001–F004 | Template list/create/update/delete flow assumes legacy `draft`/`published` status or `active` field | Do not assume template lifecycle/default/active semantics; follow explicit target decision and schema contract | Target schema / CERT-D27 |
+| CERT-QA-072 | CERT-F005 | Preview endpoint is added solely because legacy `POST /certificate-templates/:id/preview` existed | Preview remains a derived feature until approved; no new target route/contract is inferred | CERT-D11 |
+| CERT-QA-073 | CERT-F006 | Issuance-rule API/table is treated as available because legacy routes existed | Do not assume IssuanceRule exists; historical report itself says repository calls were stubbed and table absent | LEGACY-SPEC-REPORTED / target schema / CERT-D02/D20/D28 |
+| CERT-QA-074 | CERT-F006 | Course completion automatically issues a certificate on `completedAt` without checking Module 4 completion policy and CERT eligibility | Module 4 completion is HOD-verified in v1; automatic certificate trigger remains a separate CERT-D01/D02/D20 decision | Module 4 / CERT-D01/D02/D20 |
+| CERT-QA-075 | CERT-F006 | Contest end automatically issues certificates to legacy top-three or all registered participants | Do not import legacy Event rules; Module 11 CON-D25 and Module 12 eligibility decision must govern | Module 11 / CERT-D01/D12/D20 |
+| CERT-QA-076 | CERT-F006 | Legacy `PathCompleted` event issues target Certificate without a target path/achievement relation and eligibility contract | No target path trigger is confirmed; align Modules 16/17 and CERT-D01/D20/D28 before enabling | LEGACY-SPEC-REPORTED / Modules 16–17 |
+| CERT-QA-077 | CERT-F006 | Legacy `RoomCompleted` event issues target Certificate without target room relation or completion guard | No target room trigger is confirmed; do not assume Room is a target Certificate source | LEGACY-SPEC-REPORTED / FSM-D07 / CERT-D01/D28 |
+| CERT-QA-078 | CERT-F006 | Legacy `EventCompleted` consumer iterates all registered participants and issues Certificates | Target ContestParticipant/result eligibility and award criteria remain open; no auto-issue from registration alone | LEGACY-SPEC-REPORTED / CON-D25 / CERT-D01/D20 |
+| CERT-QA-079 | CERT-F006 | Background issuer and renderer use incompatible payloads or missing recipient/title values | Where asynchronous rendering is selected, producer/consumer contract must be explicit and contract-tested; legacy crash is a regression warning, not target architecture | LEGACY-SPEC-REPORTED / CERT-D26 / Module 18 |
+| CERT-QA-080 | CERT-F008 | `.html` artifact with `text/html` is returned as though it were a binary PDF solely because field is named `pdfUrl` | Artifact MIME/type and download behavior must match the approved CERT-D15 contract; do not mislabel HTML as PDF | LEGACY-SPEC-REPORTED / CERT-D15 |
+| CERT-QA-081 | CERT-F009 | `verificationCode` is assumed to be a 32-character hex token generated from 16 random bytes | Do not impose legacy token length/encoding/uniqueness or expose code until CERT-D16 is approved | LEGACY-SPEC-REPORTED / CERT-D16 |
+| CERT-QA-082 | CERT-F009 | Anonymous verification is enabled using legacy QR or UUID routes without target approval | Public vs authenticated access and public fields remain CERT-D17; no legacy route is assumed enabled | LEGACY-SPEC-REPORTED / CERT-D17 |
+| CERT-QA-083 | CERT-F009 | Public verification by predictable/guessable certificate UUID reveals recipient or award metadata | Apply only approved access model; no public lookup/response fields without CERT-D17 and Module 15 review | CERT-D17 / AUD decisions |
+| CERT-QA-084 | CERT-F007/F008 | Legacy `isPublic` toggle or public certificate directory is assumed in target Student My Certificates | Target Certificate schema has no isPublic; public visibility is not currently source-confirmed | LEGACY-SPEC-REPORTED / target schema / CERT-D17/D28 |
+| CERT-QA-085 | CERT-F006 | Legacy `issued` → `revoked` lifecycle, revoke reason/time, or irreversible revocation is added without target lifecycle approval | Target schema has no status/revocation fields; keep blocked pending CERT-D18 and FSM-D12 | LEGACY-SPEC-REPORTED / CERT-D18 / FSM-D12 |
+| CERT-QA-086 | CERT-F006 | Reissue creates a new certificate/QR and preserves original based only on legacy endpoint behavior | Reissue, duplicate issuance, history and original validity are CERT-D13/D18 decisions; do not assume legacy semantics | LEGACY-SPEC-REPORTED / CERT-D13/D18 |
+| CERT-QA-087 | CERT-F001/F006/F007 | Staff `GET /certificates` all-records console or `/platform/credentials` page is assumed from legacy frontend despite no target Page–DB mapping | Target page mapping confirms HOD Certificate Templates and Student My Certificates; additional staff issuance pages/permissions remain CERT-D21/D25 | LEGACY-SPEC-REPORTED / page mapping / CERT-D25 |
+| CERT-QA-088 | CERT-F006/F007 | WebSocket `certificate:issued` event is assumed to notify Student and authorize a private user channel | Notification trigger/recipient/channel and realtime delivery are Module 13 decisions; no legacy WebSocket event is adopted | LEGACY-SPEC-REPORTED / Module 13 / CERT-D21 |
+
 ## Coverage summary
-68 test cases cover:
+88 test cases cover:
 - template read/create/update/delete and role scope;
 - template HTML/styles security and preview;
 - issuance eligibility, duplicate/idempotency, source relations, renderer/PDF/QR failures;
 - Student ownership and certificate detail;
 - PDF access controls;
-- verification privacy, enumeration, QR, and lifecycle decision dependencies.
+- verification privacy, enumeration, QR, and lifecycle decision dependencies;
+- target-versus-legacy schema, lifecycle, milestone triggers, worker payload, HTML/PDF, public verification, privacy, revocation/reissue, and notification regressions.
+
+CERT-QA-069–088 explicitly keep legacy Credentials fields, routes, triggers, bugs, and side effects from being silently imported. Cases are defined only; they have not been executed.
 
 Policy-dependent tests must remain blocked until the corresponding decision is approved.

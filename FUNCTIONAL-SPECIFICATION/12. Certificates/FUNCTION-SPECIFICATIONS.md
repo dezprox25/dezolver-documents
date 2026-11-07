@@ -1,6 +1,6 @@
 # Module 12 — Certificates: Function-Level Specifications
 
-**Document ID:** CERT-FS-FUNCTIONS-001 | **Version:** 0.1 | **Status:** Detailed draft; decisions open  
+**Document ID:** CERT-FS-FUNCTIONS-001 | **Version:** 0.2 | **Status:** Detailed draft; decisions open  
 **Standard:** [Functional Specification Standard](../FUNCTIONAL-SPECIFICATION-STANDARD.md)  
 **Parent:** [Module overview](./README.md) · [QA companion](./QA-TEST-CASES.md)
 
@@ -17,6 +17,46 @@
 | STUDENT | Allow own | Deny | Deny | Deny | Own certificates only |
 
 RBAC resource-level Certificate permissions do not explicitly separate template CRUD from issuance/revocation. Fine-grained permission mapping remains CERT-D03–D06.
+
+## Historical function and route crosswalk
+
+**Evidence status: LEGACY-SPEC-REPORTED.** The old-code Module 12 specification reports these endpoints, consumers and defects from a prior Credentials implementation. This pass reviewed the forensic report artifact only; raw application files were not independently fetched. No item below is a target approval.
+
+| Target function ID | Historical route/behavior reported | Target specification treatment |
+|---|---|---|
+| CERT-F001 | `GET /certificate-templates`; legacy tenant-scoped list. | Target page is HOD Certificate Templates; apply target College/Department scope and roles. Legacy tenant field and route are not target contract. |
+| CERT-F002 | `POST /certificate-templates`; legacy template fields name/kind/design and reported initial draft status. | Target fields are title/htmlTemplate/stylesConfig. Legacy status/default/design format is not imported. |
+| CERT-F003 | The report's listed route inventory did not identify a template update route. | Target RBAC permits HOD/SUPER_ADMIN update; exact target endpoint, editable fields and creator ownership remain open. |
+| CERT-F004 | The report's listed route inventory did not identify template deletion; it did include DELETE issuance-rule route. | Target Super Admin Delete permission is source-confirmed; restrict/archive/delete with issued references remains CERT-D19. |
+| CERT-F005 | `POST /certificate-templates/:id/preview` was reported; renderer allegedly generated a preview payload. | Target preview is a derived candidate only. Template sanitization, stylesheet schema, placeholders and sample-data rules remain CERT-D08–D11. |
+| CERT-F006 | Manual `/certificates` and `/certificates/manual`; background `PathCompleted`, `EventCompleted`, `RoomCompleted` consumers; report says templates had to be published/active. | Target Course/Contest source fields exist, but Business Flow defines no issuance workflow. Do not import event triggers, template published/active state, rules table, top-three awards or automatic issue. |
+| CERT-F007 | `GET /me/certificates`, `GET /me/certificates/:id`; report says server checked owner. | Target Student My Certificates page and RBAC V OWN support owner-scoped access; fields/summary projection and related-course/contest access remain open. |
+| CERT-F008 | `GET /me/certificates/:id/download` reportedly redirected to CloudFront `pdfUrl`; report says stored object was HTML, not PDF. | Target `pdfUrl` field alone does not establish binary PDF, direct URL, redirect or public access. CERT-D15 controls artifact/access contract. |
+| CERT-F009 | Public `GET /certificates/verify/:qrCode` and `/verify/c/:certificateId` were reported. | Target `verificationCode`/`qrCodeUrl` fields do not prove public verification is required or public. CERT-D16/17/18 remain open. |
+
+### Historical operations without a target function ID
+
+| Historical operation | Reported legacy behavior | Why not promoted to target function |
+|---|---|---|
+| Template publish | `POST /certificate-templates/:id/publish`; legacy template status draft → published, plus active flag. | Current target CertificateTemplate has no status/active field. CERT-D27 added. |
+| Issuance rules | GET/POST/DELETE `/issuance-rules`; report states IssuanceRule model/table was absent and repository methods returned empty/mock results. | Not target schema/page-supported; keep outside inventory pending target need and schema (CERT-D02/20/28). |
+| Student privacy toggle | `PATCH /me/certificates/:id` changed `isPublic`. | Target Certificate has no isPublic field; public directory semantics are not source-defined (CERT-D17/28). |
+| Reissue/revoke | POST `/certificates/:id/reissue` and `/revoke`; old record preserved, new record got a new QR; revoke stored reason/time and changed status. | Target schema has no status/revocation fields/history. Lifecycle decision belongs to CERT-D13/18/FSM-D12. |
+| Public and staff pages | Public verification pages, staff all-certificates console, issuance-rule page and private WebSocket event were reported. | Target Page–DB Mapping includes HOD Certificate Templates and Student My Certificates only. Additional pages/channels remain CERT-D21/25 and Module 13 decisions. |
+
+### Target schema versus legacy schema — do not conflate
+
+| Target conceptual field | Historical counterpart | Evidence note |
+|---|---|---|
+| CertificateTemplate.title | `name` | Not same source field; target title length 255. |
+| CertificateTemplate.htmlTemplate | `design` JSON | Target has HTML text; old report says design JSON. Rendering/sanitization remains open. |
+| CertificateTemplate.stylesConfig | `design` JSON | Target separate JSON config; old model had a single design field. |
+| Certificate.verificationCode | `qrCode` | No evidence they share format, entropy, uniqueness constraint or public exposure. |
+| Certificate.qrCodeUrl | QR code token/URL behavior | Field exists; target payload/destination semantics not defined. |
+| Certificate.courseId / contestId | `contextType` / `contextId` (`course`, `event`, `path`, `room`, etc.) | Target explicitly maps Course and Contest; legacy path/room/event identifiers are not target entity relations. |
+| Certificate.studentId | legacy `userId` | Target uses Student semantics; identity/ownership must be resolved via Module 1. |
+| Certificate.pdfUrl | legacy URL to S3-hosted `.html` | Do not infer PDF MIME or binary content from field name. |
+| No target field | legacy `isPublic`, `status`, `revokedAt`, `revocationReason`, `metadata` | These need separate product/schema decisions; do not write them as current target facts. |
 
 ## CERT-F001 — List and view Certificate Templates
 
@@ -289,7 +329,18 @@ RBAC resource-level Certificate permissions do not explicitly separate template 
 
 **QA:** CERT-QA-059–068.
 
-## Decision log
+## Cross-module contract reconciliation
+
+- **Module 1 — Authentication & User Lifecycle:** derive Student identity and active-account state from authenticated principal. Never accept a client-supplied studentId, issuer identity or College scope as authority. Certificate owner and status/role changes require Module 1 rules.
+- **Module 2 — College / Department / Section:** enforce SUPER_ADMIN global, HOD College+Department, Manager assigned Section and Student own-record boundaries. Certificate source relationships do not widen scope.
+- **Module 4 — Course & Enrollment:** CourseEnrollment.completedAt exists, but adopted Module 4 v1 completion is HOD-verified. Completion of a Course does not automatically trigger issuance; Module 12 must approve eligibility and trigger. Course completion is not implied by finishing an individual Problem/Lab/Assessment/Contest.
+- **Module 11 — Contests:** Contest results and certificate eligibility are not the same rule. CON-D25 remains open; the historical top-three certificate flag is not target policy.
+- **Module 13 — Notifications:** certificate-issued/revoked notification triggers, recipients, channels and retry are not defined in current sources. Do not infer a WebSocket or email event from the legacy report.
+- **Module 15 — Audit Logging:** audit coverage for template changes, manual/automatic issue, reissue and revoke must align with AUD decisions; exact event catalog and sensitive metadata handling remain open.
+- **Module 16/17 — Learning progress and state machines:** historical PathCompleted/RoomCompleted triggers require a target milestone definition and guard; FSM-D07/D12 remain open. Skip-to-completion fraud is reported as a critical legacy risk, not a target certificate rule.
+- **Module 18 — Edge Cases & Failure Handling:** define idempotent issuance, event replay, renderer/QR/storage failure, partial artifacts, retry, dead-letter and recovery. The reported worker payload mismatch is historical evidence only; no BullMQ/S3 architecture is selected.
+
+## Decision log## Decision log
 | ID | Question | Status |
 |---|---|---|
 | CERT-D01 | Certificate eligibility and achievement source | Open |
@@ -318,3 +369,5 @@ RBAC resource-level Certificate permissions do not explicitly separate template 
 | CERT-D24 | Super Admin cross-College operations | Open |
 | CERT-D25 | HOD/Manager issued-certificate pages | Open |
 | CERT-D26 | Rendering/PDF/QR failure and retry behavior | Open |
+| CERT-D27 | Does the target CertificateTemplate have a draft/published/archived lifecycle or active flag, and what actions/roles can transition it? The target conceptual schema contains no status/active fields. | Open |
+| CERT-D28 | Reconcile target Certificate/Credential data model and supported achievement contexts: Course/Contest source fields vs legacy contextType/contextId, Path/Room/Event triggers, QR/privacy/revocation metadata. Define any schema delta/migration explicitly. | Open |

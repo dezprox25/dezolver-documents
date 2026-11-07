@@ -37,7 +37,7 @@ All module upgrades must follow the [Functional Specification Standard](./FUNCTI
 | 11.4 | [Contest Penalty](./11.%20Contests/11.4%20Contest%20Penalty/README.md) | Detailed draft; penalty formula/unit decisions open |
 | 11.5 | [Contest Ranking](./11.%20Contests/11.5%20Contest%20Ranking/README.md) | Detailed draft; rank ordering and visibility decisions open |
 | 11.6 | [Contest Tie Breaking](./11.%20Contests/11.6%20Contest%20Tie%20Breaking/README.md) | Detailed draft; tie-break policy not source-defined |
-| 12 | [Certificates](./12.%20Certificates/README.md) | Detailed draft — 9 function specs + QA companion (68 cases); eligibility, issuance, PDF/QR, verification decisions open |
+| 12 | [Certificates](./12.%20Certificates/README.md) | Detailed source-first draft — 9 function specs + 88 QA cases; historical Credentials crosswalk added; eligibility, triggers, schema reconciliation, artifact/PDF, verification and lifecycle decisions remain open |
 | 13 | [Notifications](./13.%20Notifications/README.md) | Detailed draft — 9 function specs + QA companion (65 cases); trigger, sender/recipient, read-state, delivery, and channel decisions open |
 | 14 | [Support Tickets](./14.%20Support%20Tickets/README.md) | Detailed draft — 13 function specs + QA companion (92 cases); lifecycle, assignment, comment visibility, escalation and verification decisions open |
 | 15 | [Audit Logging](./15.%20Audit%20Logging/README.md) | Detailed draft — 13 function specs + QA companion (98 cases); audit coverage, failure capture, privacy/redaction, retention, export, and scope decisions open |
